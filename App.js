@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { AppLoading } from 'expo';
 import { StyleSheet, Text, View, Image} from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue } from 'firebase/database';
 
+
 export default function App() {
+
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [distancia, setDistancia] = useState(0);
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
-  const [selectedPlant, setSelectedPlant] = useState('Plant1'); // Elige un valor predeterminado
+  const [selectedPlant, setSelectedPlant] = useState('Plant 1'); // Elige un valor predeterminado
 
 
   // Configura la conexión a Firebase y escucha cambios en tiempo real
@@ -37,51 +40,51 @@ export default function App() {
     });
   }, []);
 
-  const plants = ['Plant1', 'Plant2', 'Plant3', 'Plant4', 'Plant5'];
+  const plants = ['Plant 1', 'Plant 2', 'Plant 3', 'Plant 4', 'Plant 5'];
 
   return (
     <View style={styles.container}>
-  <View style={styles.header}>
-    <Text style={styles.headerText}>Home</Text>
-  </View>
-
-  <View style={styles.content}>
-  <View style={styles.plantInfoContainer}>
-      <View style={styles.menuIconContainer}>
-        <ModalDropdown
-          options={plants}
-          onSelect={(index, value) => setSelectedPlant(value)}
-          style={styles.menuIcon}
-        >
-          <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
-        </ModalDropdown>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Home</Text>
       </View>
-      <View style={styles.plantName}>
-        <Text style={styles.headerText}>{selectedPlant}</Text>
+
+      <View style={styles.content}>
+      <View style={styles.plantInfoContainer}>
+          <View style={styles.menuIconContainer}>
+            <ModalDropdown
+              options={plants}
+              onSelect={(index, value) => setSelectedPlant(value)}
+              dropdownStyle={styles.dropdown}
+            >
+              <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
+            </ModalDropdown>
+          </View>
+          <View style={styles.plantName}>
+            <Text style={styles.headerText}>{selectedPlant}</Text>
+          </View>
+        </View>
+
+        <View style={styles.rectangleContainer}>
+          <View style={styles.line}>
+            <View style={styles.lineBorder}></View>
+          </View>
+
+          <View style={styles.rectangle}>
+            <Text style={styles.rectangleText}>{distancia}</Text>
+          </View>
+
+          <View style={styles.rectangle}>
+            <Text style={[styles.rectangleText, movimiento === 1 ? { color: 'red' } : null]}>
+              {movimiento === 0 ? 'A salvo' : '¡Cuidado!'}
+            </Text>
+          </View>
+
+          <View style={styles.rectangle}>
+            <Text style={styles.rectangleText}>{temperatura}</Text>
+          </View>
+        </View>
       </View>
     </View>
-
-    <View style={styles.rectangleContainer}>
-      <View style={styles.line}>
-        <View style={styles.lineBorder}></View>
-      </View>
-
-      <View style={styles.rectangle}>
-        <Text style={styles.rectangleText}>{distancia}</Text>
-      </View>
-
-      <View style={styles.rectangle}>
-        <Text style={[styles.rectangleText, movimiento === 1 ? { color: 'red' } : null]}>
-          {movimiento === 0 ? 'A salvo' : '¡Cuidado!'}
-        </Text>
-      </View>
-
-      <View style={styles.rectangle}>
-        <Text style={styles.rectangleText}>{temperatura}</Text>
-      </View>
-    </View>
-  </View>
-</View>
 
   );
 }
@@ -101,7 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
-    fontFamily: 'Quicksand',
     marginLeft: 10, // Ajusta el margen según tus necesidades
   },
   pickerContainer: {
@@ -146,14 +148,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row', // Esto establece la dirección de fila
     alignItems: 'center', // Esto alinea los elementos verticalmente en el centro
   },
-  
+
   // Estilos para el nombre de la planta
   plantName: {
     flex: 1,
+    paddingBottom: 9,
   },
-
   // Estilos para el contenedor del menú del picker
   menuIconContainer: {
     paddingLeft: 10,
+  },
+  // Estilos para el menú
+  dropdownOptionImage: {
+    width: 30,
+    height: 35,
+  },
+  dropdown: {
+    width: 100,
+    height: 100,
+    borderColor: 'transparent',
+    borderWidth: 0,
+    borderRadius: 3,
+    backgroundColor: '#94A684',
   },
 });
