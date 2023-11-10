@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { AppLoading } from 'expo';
-import { StyleSheet, Text, View, Image} from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue } from 'firebase/database';
 
-
 export default function App() {
-
-  const [isMenuOpen, setMenuOpen] = useState(false);
-  const [distancia, setDistancia] = useState(0);
+  // Estados para almacenar los valores de sensores y la planta seleccionada
+  const [humedad, setHumedad] = useState(0);
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
   const [selectedPlant, setSelectedPlant] = useState('Plant 1'); // Elige un valor predeterminado
 
 
-  // Configura la conexión a Firebase y escucha cambios en tiempo real
   const firebaseConfig = {
+    // Configuración de Firebase con las credenciales de tu proyecto
     apiKey: "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY",
     authDomain: "gardensense-cfe37.firebaseapp.com",
     databaseURL: "https://gardensense-cfe37-default-rtdb.firebaseio.com",
@@ -26,15 +23,16 @@ export default function App() {
     appId: "1:949510113189:web:94c542b2d64df8fc2c4a4c",
     measurementId: "G-0TR1T5V5ZP"
   };
-
+  // Inicializa la aplicación de Firebase
   const firebaseApp = initializeApp(firebaseConfig);
   const db = getDatabase(firebaseApp);
   const sensoresRef = ref(db, 'sensores');
 
   useEffect(() => {
+    // Escucha cambios en la base de datos de Firebase y actualiza los estados
     onValue(sensoresRef, (snapshot) => {
       const data = snapshot.val();
-      setDistancia(data.distancia);
+      setHumedad(data.humedad);
       setMovimiento(data.movimiento);
       setTemperatura(data.temperatura);
     });
@@ -44,19 +42,22 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      {/* Encabezado de la aplicación */}
       <View style={styles.header}>
         <Image source={require('./images/options.png')} style={styles.options} />
-
         <View style={styles.home}>
           <Text style={styles.headerText}>Home</Text>
         </View>
       </View>
 
       <View style={styles.content}>
-      <View style={styles.plantInfoContainer}>
+        {/* Información de la planta seleccionada */}
+        <View style={styles.plantInfoContainer}>
           <View style={styles.menuIconContainer}>
+            {/* Selector de planta desplegable */}
             <ModalDropdown
               options={plants}
+              initialScrollIndex={0}
               onSelect={(index, value) => setSelectedPlant(value)}
               dropdownStyle={styles.dropdown}
             >
@@ -68,28 +69,32 @@ export default function App() {
           </View>
         </View>
 
+        {/* Contenedor de información de sensores */}
         <View style={styles.rectangleContainer}>
+          {/* Línea de separación */}
           <View style={styles.line}>
             <View style={styles.lineBorder}></View>
           </View>
 
+          {/* Muestra la humedad del sensor */}
           <View style={styles.rectangle}>
-            <Text style={styles.rectangleText}>{distancia}</Text>
+            <Text style={styles.rectangleText}>{humedad}</Text>
           </View>
 
+          {/* Muestra el estado de movimiento del sensor */}
           <View style={styles.rectangle}>
             <Text style={[styles.rectangleText, movimiento === 1 ? { color: 'red' } : null]}>
               {movimiento === 0 ? 'A salvo' : '¡Cuidado!'}
             </Text>
           </View>
 
+          {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
             <Text style={styles.rectangleText}>{temperatura}</Text>
           </View>
         </View>
       </View>
     </View>
-
   );
 }
 
@@ -147,6 +152,7 @@ const styles = StyleSheet.create({
   rectangleText: {
     fontSize: 30,
     fontWeight: 'bold',
+    color: '#fff',
   },
   line: {
     flexDirection: 'row',
@@ -175,7 +181,7 @@ const styles = StyleSheet.create({
   menuIconContainer: {
     paddingLeft: 10,
   },
-  // Estilos para el menú
+  // Estilos para el menú desplegable
   dropdownOptionImage: {
     width: 30,
     height: 35,
