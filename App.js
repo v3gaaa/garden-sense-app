@@ -45,7 +45,11 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Home</Text>
+        <Image source={require('./images/options.png')} style={styles.options} />
+
+        <View style={styles.home}>
+          <Text style={styles.headerText}>Home</Text>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -60,7 +64,7 @@ export default function App() {
             </ModalDropdown>
           </View>
           <View style={styles.plantName}>
-            <Text style={styles.headerText}>{selectedPlant}</Text>
+            <Text style={styles.Text}>{selectedPlant}</Text>
           </View>
         </View>
 
@@ -96,7 +100,6 @@ const styles = StyleSheet.create({
   },
   header: {
     height: 90,
-    backgroundColor: '#94A684',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -104,7 +107,18 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
-    marginLeft: 10, // Ajusta el margen según tus necesidades
+  },
+  home: {
+    paddingVertical: 27,
+    backgroundColor: "#94A684",
+    flex: 1,
+    alignItems: 'center',
+    borderBottomLeftRadius: 30,
+  },
+  options: {
+    marginTop: 10,
+    marginLeft: 20,
+    marginRight: 160,
   },
   pickerContainer: {
     top: 0,
@@ -137,22 +151,25 @@ const styles = StyleSheet.create({
   line: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
   },
   lineBorder: {
     flex: 1,
     height: 2,
-    backgroundColor: 'black',
+    backgroundColor: '#94A684',
   },
   plantInfoContainer: {
     flexDirection: 'row', // Esto establece la dirección de fila
     alignItems: 'center', // Esto alinea los elementos verticalmente en el centro
   },
-
   // Estilos para el nombre de la planta
   plantName: {
     flex: 1,
-    paddingBottom: 9,
+    marginLeft: 10,
+  },
+  Text: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   // Estilos para el contenedor del menú del picker
   menuIconContainer: {
