@@ -90,7 +90,7 @@ export default function App() {
 
           {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
-            <Text style={styles.rectangleText}>{temperatura}</Text>
+            <Text style={styles.rectangleText}>{temperatura} °C</Text>
           </View>
         </View>
       </View>
