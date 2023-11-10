@@ -8,6 +8,7 @@ import { getDatabase, ref, onValue } from 'firebase/database';
 
 export default function App() {
 
+  const [isMenuOpen, setMenuOpen] = useState(false);
   const [distancia, setDistancia] = useState(0);
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
