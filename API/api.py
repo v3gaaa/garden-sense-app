@@ -68,7 +68,7 @@ if count == 0:
 # Función para insertar datos en la tabla 'data_sensores'
 def insert_sensor_data(humedad, movimiento, temperatura, user):
     insert_data_query = """
-    INSERT INTO data_sensores (humedad, movimiento, humedad,user) VALUES (%s, %s, %s, %s);
+    INSERT INTO data_sensores (humedad, movimiento,temperatura,user) VALUES (%s, %s, %s, %s);
     """
     sensor_data = (humedad, movimiento, temperatura, user)
     cursor.execute(insert_data_query, sensor_data)
@@ -187,7 +187,7 @@ def feed_database():
 
 # Configuración de la tarea programada con APScheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(feed_database, 'interval', minutes=5)
+scheduler.add_job(feed_database, 'interval', minutes=2)
 scheduler.start()
 
 # Función que se ejecuta al cerrar la aplicación
