@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, Image } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue } from 'firebase/database';
+import axios from 'axios';
+
 
 export default function App() {
   // Estados para almacenar los valores de sensores y la planta seleccionada
@@ -10,7 +12,8 @@ export default function App() {
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
   const [selectedPlant, setSelectedPlant] = useState('Plant 1'); // Elige un valor predeterminado
-
+  const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
+  const [plantNames, setPlantNames] = useState([]);
 
   const firebaseConfig = {
     // Configuración de Firebase con las credenciales de tu proyecto
@@ -36,10 +39,28 @@ export default function App() {
       setMovimiento(data.movimiento);
       setTemperatura(data.temperatura);
     });
-  }, []);
 
-  const plants = ['Plant 1', 'Plant 2', 'Plant 3', 'Plant 4', 'Plant 5'];
+    // Realizar la solicitud a la API al cargar la planta seleccionada
+    getPlantDetails(selectedPlant);
 
+    // Realizar solicitud a la API para obtener nombres de plantas
+    fetch("http://localhost:8000/plantas/nombres")
+      .then(response => response.json())
+      .then(data => setPlantNames(data))
+      .catch(error => console.error("Error al obtener nombres de plantas:", error));
+
+  }, [selectedPlant]);  // Agrega selectedPlant como dependencia
+
+  const getPlantDetails = async (plantName) => {
+    try {
+      // Realizar una solicitud a la API para obtener detalles de la planta
+      const response = await axios.get(`http://localhost:8000/plantas/${plantName}`);
+      setPlantDetails(response.data);  // Actualizar el estado con los detalles de la planta
+    } catch (error) {
+      console.error('Error al obtener detalles de la planta:', error);
+    }
+  };
+ 
   return (
     <View style={styles.container}>
       {/* Encabezado de la aplicación */}
@@ -56,7 +77,7 @@ export default function App() {
           <View style={styles.menuIconContainer}>
             {/* Selector de planta desplegable */}
             <ModalDropdown
-              options={plants}
+              options={plantNames}
               initialScrollIndex={0}
               onSelect={(index, value) => setSelectedPlant(value)}
               dropdownStyle={styles.dropdown}
@@ -78,7 +99,11 @@ export default function App() {
 
           {/* Muestra la humedad del sensor */}
           <View style={styles.rectangle}>
-            <Text style={styles.rectangleText}>{humedad}</Text>
+            <Text style={styles.rectangleText}>
+              {humedad >= plantDetails.minhum && humedad <= plantDetails.maxhum
+                ? 'Regada'
+                : 'Regar planta'}
+            </Text>
           </View>
 
           {/* Muestra el estado de movimiento del sensor */}
@@ -90,8 +115,12 @@ export default function App() {
 
           {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
-            <Text style={styles.rectangleText}>{temperatura} °C</Text>
+            <Text style={[styles.rectangleText, 
+                        temperatura > plantDetails.maxtemp ? { color: 'red' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
+              {temperatura} °C
+            </Text>
           </View>
+          
         </View>
       </View>
     </View>

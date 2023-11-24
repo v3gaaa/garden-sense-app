@@ -155,6 +155,50 @@ async def get_plantas():
     except Exception as e:
         print(f"Error al obtener datos de las plantas: {str(e)}")
         return JSONResponse(content={"message": "Error al obtener datos de las plantas"}, status_code=500)
+    
+
+# Endpoint para obtener detalles de una planta específica
+@app.get("/plantas/{nombre_planta}")
+async def get_planta_details(nombre_planta: str):
+    try:
+        # Ejecutar una consulta SQL para obtener los detalles de la planta específica
+        query = "SELECT id, nombre, mintemp, maxtemp, minhum, maxhum FROM data_plantas WHERE nombre = %s;"
+        cursor.execute(query, (nombre_planta,))
+        result = cursor.fetchone()
+
+        if result:
+            # Formatear la respuesta
+            planta_data = {
+                "id": result[0],
+                "nombre": result[1],
+                "mintemp": result[2],
+                "maxtemp": result[3],
+                "minhum": result[4],
+                "maxhum": result[5],
+            }
+            return planta_data
+        else:
+            return JSONResponse(content={"message": "Planta no encontrada"}, status_code=404)
+    except Exception as e:
+        print(f"Error al obtener detalles de la planta: {str(e)}")
+        return JSONResponse(content={"message": "Error al obtener detalles de la planta"}, status_code=500)
+
+
+# Endpoint para obtener nombres de todas las plantas
+@app.get("/plantas/nombres")
+async def get_nombres_plantas():
+    try:
+        # Ejecutar una consulta SQL para obtener los nombres de todas las plantas
+        query = "SELECT nombre FROM data_plantas;"
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        # Formatear la respuesta
+        nombres_plantas = [result[0] for result in results]
+        return nombres_plantas
+    except Exception as e:
+        print(f"Error al obtener nombres de las plantas: {str(e)}")
+        return JSONResponse(content={"message": "Error al obtener nombres de las plantas"}, status_code=500)
 
 # Función que se ejecutará cada 5 minutos para alimentar la base de datos
 def feed_database():
@@ -203,5 +247,5 @@ def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="localhost", port=8000)
 
