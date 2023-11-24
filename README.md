@@ -16,7 +16,7 @@ This project integrates real-time sensor data with a mobile app to provide you w
 
 - **Hardware**: ESP32, various sensors
 - **Frontend**: React Native with Expo
-- **Backend**: Firebase Realtime Database
+- **Backend**: Firebase Realtime Database and MySql
 
 ## Getting Started
 
