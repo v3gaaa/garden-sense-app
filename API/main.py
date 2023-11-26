@@ -1,5 +1,6 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 from datetime import datetime, timedelta
 import time
@@ -7,6 +8,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Esto permite solicitudes desde cualquier origen, pero deberías limitarlo a los dominios que necesitas.
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configuración de la conexión a la base de datos
 conexion = mysql.connector.connect(
@@ -73,6 +81,11 @@ def insert_sensor_data(humedad, movimiento, temperatura, user):
     sensor_data = (humedad, movimiento, temperatura, user)
     cursor.execute(insert_data_query, sensor_data)
     conexion.commit()
+
+#Endpoint principal
+@app.get("/")
+async def root():
+    return {"message": "Bienvenido a la API de GardenSense"}
 
 # Endpoint para obtener datos de los sensores
 @app.get("/sensores")
@@ -157,6 +170,22 @@ async def get_plantas():
         return JSONResponse(content={"message": "Error al obtener datos de las plantas"}, status_code=500)
     
 
+# Endpoint para obtener nombres de todas las plantas
+@app.get("/plantas/nombres")
+async def get_nombres_plantas():
+    try:
+        # Ejecutar una consulta SQL para obtener los nombres de todas las plantas
+        query = "SELECT nombre FROM data_plantas;"
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        # Formatear la respuesta
+        nombres_plantas = [result[0] for result in results]
+        return nombres_plantas
+    except Exception as e:
+        print(f"Error al obtener nombres de las plantas: {str(e)}")
+        return JSONResponse(content={"message": "Error al obtener nombres de las plantas"}, status_code=500)
+
 # Endpoint para obtener detalles de una planta específica
 @app.get("/plantas/{nombre_planta}")
 async def get_planta_details(nombre_planta: str):
@@ -182,23 +211,6 @@ async def get_planta_details(nombre_planta: str):
     except Exception as e:
         print(f"Error al obtener detalles de la planta: {str(e)}")
         return JSONResponse(content={"message": "Error al obtener detalles de la planta"}, status_code=500)
-
-
-# Endpoint para obtener nombres de todas las plantas
-@app.get("/plantas/nombres")
-async def get_nombres_plantas():
-    try:
-        # Ejecutar una consulta SQL para obtener los nombres de todas las plantas
-        query = "SELECT nombre FROM data_plantas;"
-        cursor.execute(query)
-        results = cursor.fetchall()
-
-        # Formatear la respuesta
-        nombres_plantas = [result[0] for result in results]
-        return nombres_plantas
-    except Exception as e:
-        print(f"Error al obtener nombres de las plantas: {str(e)}")
-        return JSONResponse(content={"message": "Error al obtener nombres de las plantas"}, status_code=500)
 
 # Función que se ejecutará cada 5 minutos para alimentar la base de datos
 def feed_database():
@@ -247,5 +259,5 @@ def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
 

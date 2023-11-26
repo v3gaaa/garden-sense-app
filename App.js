@@ -11,7 +11,7 @@ export default function App() {
   const [humedad, setHumedad] = useState(0);
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
-  const [selectedPlant, setSelectedPlant] = useState('Plant 1'); // Elige un valor predeterminado
+  const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
   const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
   const [plantNames, setPlantNames] = useState([]);
 
@@ -44,7 +44,7 @@ export default function App() {
     getPlantDetails(selectedPlant);
 
     // Realizar solicitud a la API para obtener nombres de plantas
-    fetch("http://localhost:8000/plantas/nombres")
+    fetch("https://garden-sense-app-production.up.railway.app//plantas/nombres")
       .then(response => response.json())
       .then(data => setPlantNames(data))
       .catch(error => console.error("Error al obtener nombres de plantas:", error));
@@ -54,7 +54,7 @@ export default function App() {
   const getPlantDetails = async (plantName) => {
     try {
       // Realizar una solicitud a la API para obtener detalles de la planta
-      const response = await axios.get(`http://localhost:8000/plantas/${plantName}`);
+      const response = await axios.get(`https://garden-sense-app-production.up.railway.app//plantas/${plantName}`);
       setPlantDetails(response.data);  // Actualizar el estado con los detalles de la planta
     } catch (error) {
       console.error('Error al obtener detalles de la planta:', error);
@@ -99,10 +99,20 @@ export default function App() {
 
           {/* Muestra la humedad del sensor */}
           <View style={styles.rectangle}>
-            <Text style={styles.rectangleText}>
-              {humedad >= plantDetails.minhum && humedad <= plantDetails.maxhum
-                ? 'Regada'
-                : 'Regar planta'}
+            <Text style={[
+              styles.rectangleText,
+              // Cambia el color y el mensaje basado en la humedad
+              humedad > plantDetails.maxhum
+                ? { color: 'navy' }
+                : humedad < plantDetails.minhum
+                ? { color: 'yellow' }
+                : null,
+            ]}>
+              {humedad > plantDetails.maxhum
+                ? 'Mucha agua'
+                : humedad < plantDetails.minhum
+                ? 'Falta regar'
+                : 'Regada'}
             </Text>
           </View>
 
@@ -116,7 +126,7 @@ export default function App() {
           {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
             <Text style={[styles.rectangleText, 
-                        temperatura > plantDetails.maxtemp ? { color: 'red' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
+                        temperatura > plantDetails.maxtemp ? { color: 'orange' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
               {temperatura} °C
             </Text>
           </View>
