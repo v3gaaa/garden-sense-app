@@ -44,7 +44,7 @@ export default function App() {
     getPlantDetails(selectedPlant);
 
     // Realizar solicitud a la API para obtener nombres de plantas
-    fetch("https://garden-sense-app-production.up.railway.app//plantas/nombres")
+    fetch("https://garden-sense-app-production.up.railway.app/plantas/nombres")
       .then(response => response.json())
       .then(data => setPlantNames(data))
       .catch(error => console.error("Error al obtener nombres de plantas:", error));
@@ -54,7 +54,7 @@ export default function App() {
   const getPlantDetails = async (plantName) => {
     try {
       // Realizar una solicitud a la API para obtener detalles de la planta
-      const response = await axios.get(`https://garden-sense-app-production.up.railway.app//plantas/${plantName}`);
+      const response = await axios.get(`https://garden-sense-app-production.up.railway.app/plantas/${plantName}`);
       setPlantDetails(response.data);  // Actualizar el estado con los detalles de la planta
     } catch (error) {
       console.error('Error al obtener detalles de la planta:', error);
