@@ -8,6 +8,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 
 app = FastAPI()
+
+# Variables globales para almacenar los detalles de la planta seleccionada
+planta_seleccionada = {"nombre": "", "minhum": 0, "maxhum": 0}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Esto permite solicitudes desde cualquier origen, pero deberías limitarlo a los dominios que necesitas.
@@ -68,7 +72,9 @@ if count == 0:
     INSERT INTO data_plantas (nombre, mintemp, maxtemp, minhum, maxhum) VALUES
     ('Tomate', 20, 28, 60, 80),
     ('Pimiento', 22, 30, 50, 70),
-    ('Zanahoria', 15, 25, 50, 70);
+    ('Zanahoria', 15, 25, 50, 70),
+    ('FueraMin', 1, 2, 1, 2),
+    ('FueraMax', 99, 100, 99, 100);
     """
     cursor.execute(insert_inicial_plantas_query)
     conexion.commit()
@@ -124,24 +130,6 @@ def insert_planta_data(nombre, mintemp, maxtemp, minhum, maxhum):
     cursor.execute(insert_planta_query, planta_data)
     conexion.commit()
 
-# Endpoint para añadir una nueva planta
-@app.post("/plantas")
-async def add_planta(planta: dict):
-    try:
-        # Validar que se proporcionen todos los campos necesarios
-        required_fields = ["nombre", "mintemp", "maxtemp", "minhum", "maxhum"]
-        for field in required_fields:
-            if field not in planta:
-                return JSONResponse(content={"message": f"El campo '{field}' es obligatorio"}, status_code=400)
-
-        # Llamar a la función para insertar los datos de la nueva planta
-        insert_planta_data(planta["nombre"], planta["mintemp"], planta["maxtemp"], planta["minhum"], planta["maxhum"])
-        return JSONResponse(content={"message": "Nueva planta añadida correctamente"}, status_code=201)
-
-    except Exception as e:
-        print(f"Error al añadir nueva planta: {str(e)}")
-        return JSONResponse(content={"message": "Error al añadir nueva planta"}, status_code=500)
-
 # Endpoint para obtener datos de todas las plantas
 @app.get("/plantas")
 async def get_plantas():
@@ -168,6 +156,31 @@ async def get_plantas():
     except Exception as e:
         print(f"Error al obtener datos de las plantas: {str(e)}")
         return JSONResponse(content={"message": "Error al obtener datos de las plantas"}, status_code=500)
+
+# Endpoint para añadir una nueva planta
+@app.post("/plantas/nueva")
+async def add_planta(planta: dict):
+    try:
+        # Validar que se proporcionen todos los campos necesarios
+        required_fields = ["nombre", "mintemp", "maxtemp", "minhum", "maxhum"]
+        for field in required_fields:
+            if field not in planta:
+                return JSONResponse(content={"message": f"El campo '{field}' es obligatorio"}, status_code=400)
+
+        # Llamar a la función para insertar los datos de la nueva planta
+        insert_planta_data(planta["nombre"], planta["mintemp"], planta["maxtemp"], planta["minhum"], planta["maxhum"])
+        return JSONResponse(content={"message": "Nueva planta añadida correctamente"}, status_code=201)
+
+    except Exception as e:
+        print(f"Error al añadir nueva planta: {str(e)}")
+        return JSONResponse(content={"message": "Error al añadir nueva planta"}, status_code=500)
+
+# Endpoint para actualizar los detalles de la planta seleccionada
+@app.post("/plantas/seleccionada")
+async def set_planta_seleccionada(planta: dict):
+    global planta_seleccionada
+    planta_seleccionada = planta
+    return {"message": "Detalles de planta actualizados correctamente"}
     
 
 # Endpoint para obtener nombres de todas las plantas

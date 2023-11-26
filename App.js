@@ -60,6 +60,25 @@ export default function App() {
       console.error('Error al obtener detalles de la planta:', error);
     }
   };
+
+  const handlePlantChange = (plantName) => {
+    // Actualiza la planta seleccionada en el estado local
+    setSelectedPlant(plantName);
+    getPlantDetails(selectedPlant);
+
+    // Envia los detalles de la nueva planta a la API
+    axios.post('https://garden-sense-app-production.up.railway.app/plantas/seleccionada', {
+      nombre: plantName,
+      minhum: plantDetails.minhum,  // Usa los detalles de la planta actual
+      maxhum: plantDetails.maxhum,
+    })
+    .then(response => {
+      console.log(response.data);
+    })
+    .catch(error => {
+      console.error('Error al actualizar detalles de planta:', error);
+    });
+  }
  
   return (
     <View style={styles.container}>
@@ -77,13 +96,13 @@ export default function App() {
           <View style={styles.menuIconContainer}>
             {/* Selector de planta desplegable */}
             <ModalDropdown
-              options={plantNames}
-              initialScrollIndex={0}
-              onSelect={(index, value) => setSelectedPlant(value)}
-              dropdownStyle={styles.dropdown}
+            options={plantNames}
+            initialScrollIndex={0}
+            onSelect={(index, value) => handlePlantChange(value)} // Actualiza la planta seleccionada
+            dropdownStyle={styles.dropdown}
             >
-              <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
-            </ModalDropdown>
+            <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
+          </ModalDropdown>
           </View>
           <View style={styles.plantName}>
             <Text style={styles.Text}>{selectedPlant}</Text>
