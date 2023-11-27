@@ -89,6 +89,8 @@ def insert_sensor_data(humedad, movimiento, temperatura, user):
     cursor.execute(insert_data_query, sensor_data)
     conexion.commit()
 
+
+
 #Endpoint principal
 @app.get("/")
 async def root():
