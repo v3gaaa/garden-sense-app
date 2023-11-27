@@ -261,7 +261,7 @@ def feed_database():
 
 # Configuración de la tarea programada con APScheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(feed_database, 'interval', minutes=2)
+scheduler.add_job(feed_database, 'interval', minutes=10)
 scheduler.start()
 
 # Función que se ejecuta al cerrar la aplicación

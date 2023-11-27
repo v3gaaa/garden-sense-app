@@ -133,19 +133,47 @@ void obtenerDetallesPlanta() {
 
 
 void loop() {
-  // Firebase.ready() debe llamarse repetidamente para manejar tareas de autenticación
+  obtenerDetallesPlanta();
 
-  if (Firebase.ready() && (millis() - sendDataPrevMillis > 1000 || sendDataPrevMillis == 0)) {
+  // Lee los datos de temperatura del sensor DHT
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();  // Cambia a readHumidity() si también deseas la humedad
+
+  // Lee el valor del sensor PIR movimiento
+  newSensorValue = digitalRead(PIR_PIN);
+
+  // Comparar y controlar el LED
+  if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
+    // Encender el LED
+    digitalWrite(ledPin, HIGH);
+  } else {
+    // Apagar el LED
+    digitalWrite(ledPin, LOW);
+  }
+
+
+  if (newSensorValue != val) {
+    val = newSensorValue;
+
+    // Enviar datos a Firebase si la conexión está lista
+    if (Firebase.ready()) {
+      // Envía el valor del sensor PIR a Firebase
+      if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
+        Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
+      } else {
+        Serial.println("Error al enviar el valor del sensor PIR a Firebase");
+        Serial.println(fbdo.errorReason().c_str());
+      }
+
+      Serial.println();
+
+      count++;
+    }
+  }
+
+  // Enviar datos a Firebase si la conexión está lista y ha pasado el tiempo especificado
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 10000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
-
-    obtenerDetallesPlanta();
-
-    // Lee los datos de temperatura del sensor DHT
-    float temperature = dht.readTemperature();
-    float humidity = dht.readHumidity();  // Cambia a readHumidity() si también deseas la humedad
-
-    // Lee el valor del sensor PIR movimiento
-    val = digitalRead(PIR_PIN);
 
     // Envía el valor del sensor PIR a Firebase
     if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
@@ -177,16 +205,6 @@ void loop() {
       }
     } else {
       Serial.println("Error al leer la humedad del sensor DHT");
-    }
-
-
-    // Comparar y controlar el LED
-    if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
-      // Encender el LED
-      digitalWrite(ledPin, HIGH);
-    } else {
-      // Apagar el LED
-      digitalWrite(ledPin, LOW);
     }
 
     Serial.println();
