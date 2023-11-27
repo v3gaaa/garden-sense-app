@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Depends
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
@@ -89,8 +89,6 @@ def insert_sensor_data(humedad, movimiento, temperatura, user):
     cursor.execute(insert_data_query, sensor_data)
     conexion.commit()
 
-
-
 #Endpoint principal
 @app.get("/")
 async def root():
@@ -178,33 +176,27 @@ async def add_planta(planta: dict):
         print(f"Error al añadir nueva planta: {str(e)}")
         return JSONResponse(content={"message": "Error al añadir nueva planta"}, status_code=500)
 
-# Dependencia para almacenar los detalles de la planta seleccionada en el contexto de la solicitud
-async def get_planta_seleccionada():
-    return planta_seleccionada.copy()
-
 # Endpoint para actualizar los detalles de la planta seleccionada
 @app.post("/plantas/seleccionada")
-async def set_planta_seleccionada(
-    planta: dict,
-    detalles_planta: dict = Depends(get_planta_seleccionada)
-):
-    # Imprime la planta seleccionada actual antes de la actualización
-    print("Planta seleccionada anterior:", detalles_planta)
+async def set_planta_seleccionada(planta: dict):
+    global planta_seleccionada
     
-    # Actualiza cada campo de la planta seleccionada en el contexto de la solicitud
-    detalles_planta.update(planta)
+    # Imprime la planta seleccionada actual antes de la actualización
+    print("Planta seleccionada anterior:", planta_seleccionada)
+    
+    # Actualiza cada campo de la planta seleccionada
+    planta_seleccionada.update(planta)
     
     # Imprime la planta seleccionada actualizada
-    print("Planta seleccionada actualizada:", detalles_planta)
+    print("Planta seleccionada actualizada:", planta_seleccionada)
     
     return {"message": "Detalles de planta actualizados correctamente"}
 
 
 # Endpoint para mandar los detalles de la planta seleccionada
 @app.get("/plantas/seleccionada/enviar")
-async def enviar_planta():
+async def get_planta_seleccionada():
     return planta_seleccionada
-
     
 
 # Endpoint para obtener nombres de todas las plantas
