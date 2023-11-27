@@ -13,6 +13,11 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
+// Bibliotecas para la comunicacion con la APi
+#include <ArduinoJson.h>
+
+#include <HTTPClient.h>
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "TP-Link_4F18"
 #define WIFI_PASSWORD "90729690"
@@ -47,6 +52,10 @@ FirebaseConfig config;
 unsigned long sendDataPrevMillis = 0;
 
 unsigned long count = 0;
+
+
+// Definir PIN para el LED de estado de la humedad de la planta
+#define ledPin 21
 
 
 void setup() {
@@ -100,11 +109,36 @@ void setup() {
   dht.begin();
 }
 
+
+
+void obtenerDetallesPlanta() {
+  // Realizar solicitud a la API para obtener detalles de la planta seleccionada
+  HTTPClient http;
+  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/enviar");  // Reemplaza con la URL correcta
+  int httpCode = http.GET();
+
+  if (httpCode == HTTP_CODE_OK) {
+    // Parsear la respuesta JSON
+    DynamicJsonDocument doc(1024);  // Tamaño adecuado dependiendo de la respuesta
+    deserializeJson(doc, http.getString());
+
+    // Obtener los detalles de la planta seleccionada
+    plantaSeleccionada.nombre = doc["nombre"].as<String>();
+    plantaSeleccionada.minhum = doc["minhum"];
+    plantaSeleccionada.maxhum = doc["maxhum"];
+  }
+
+  http.end();
+}
+
+
 void loop() {
   // Firebase.ready() debe llamarse repetidamente para manejar tareas de autenticación
 
-  if (Firebase.ready() && (millis() - sendDataPrevMillis > 3000 || sendDataPrevMillis == 0)) {
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 1000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
+
+    obtenerDetallesPlanta();
 
     // Lee los datos de temperatura del sensor DHT
     float temperature = dht.readTemperature();
@@ -133,7 +167,7 @@ void loop() {
       Serial.println("Error al leer la temperatura del sensor DHT");
     }
 
-    // Envía los datos de temperatura a Firebase si la lectura es válida
+    // Envía los datos de humedad a Firebase si la lectura es válida
     if (!isnan(humidity)) {
       if (Firebase.setFloat(fbdo, "/sensores/humedad", humidity)) {
         Serial.printf("Humedad enviada a Firebase: %.2f \n", humidity);
@@ -143,6 +177,16 @@ void loop() {
       }
     } else {
       Serial.println("Error al leer la humedad del sensor DHT");
+    }
+
+
+    // Comparar y controlar el LED
+    if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
+      // Encender el LED
+      digitalWrite(ledPin, HIGH);
+    } else {
+      // Apagar el LED
+      digitalWrite(ledPin, LOW);
     }
 
     Serial.println();

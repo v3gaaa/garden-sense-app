@@ -181,6 +181,11 @@ async def set_planta_seleccionada(planta: dict):
     global planta_seleccionada
     planta_seleccionada = planta
     return {"message": "Detalles de planta actualizados correctamente"}
+
+# Endpoint para mandar los detalles de la planta seleccionada
+@app.get("/plantas/seleccionada/enviar")
+async def get_planta_seleccionada():
+    return planta_seleccionada
     
 
 # Endpoint para obtener nombres de todas las plantas
