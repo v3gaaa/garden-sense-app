@@ -179,9 +179,17 @@ async def add_planta(planta: dict):
 @app.post("/plantas/seleccionada")
 async def set_planta_seleccionada(planta: dict):
     global planta_seleccionada
-    planta_seleccionada = planta
-    #Imprimir la planta seleccionada
-    print(planta_seleccionada)
+    
+    # Imprime la planta seleccionada actual antes de la actualización
+    print("Planta seleccionada anterior:", planta_seleccionada)
+    
+    # Actualiza cada campo de la planta seleccionada con los nuevos valores
+    for key, value in planta.items():
+        planta_seleccionada[key] = value
+    
+    # Imprime la planta seleccionada actualizada
+    print("Planta seleccionada actualizada:", planta_seleccionada)
+    
     return {"message": "Detalles de planta actualizados correctamente"}
 
 # Endpoint para mandar los detalles de la planta seleccionada
