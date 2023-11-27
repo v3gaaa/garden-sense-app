@@ -183,15 +183,14 @@ async def set_planta_seleccionada(planta: dict):
     # Imprime la planta seleccionada actual antes de la actualización
     print("Planta seleccionada anterior:", planta_seleccionada)
     
-    # Actualiza cada campo de la planta seleccionada solo si se proporciona un nuevo valor
-    for key, value in planta.items():
-        if key in planta_seleccionada:
-            planta_seleccionada[key] = value
+    # Actualiza cada campo de la planta seleccionada
+    planta_seleccionada.update(planta)
     
     # Imprime la planta seleccionada actualizada
     print("Planta seleccionada actualizada:", planta_seleccionada)
     
     return {"message": "Detalles de planta actualizados correctamente"}
+
 
 # Endpoint para mandar los detalles de la planta seleccionada
 @app.get("/plantas/seleccionada/enviar")
