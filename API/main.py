@@ -183,9 +183,10 @@ async def set_planta_seleccionada(planta: dict):
     # Imprime la planta seleccionada actual antes de la actualización
     print("Planta seleccionada anterior:", planta_seleccionada)
     
-    # Actualiza cada campo de la planta seleccionada con los nuevos valores
+    # Actualiza cada campo de la planta seleccionada solo si se proporciona un nuevo valor
     for key, value in planta.items():
-        planta_seleccionada[key] = value
+        if key in planta_seleccionada:
+            planta_seleccionada[key] = value
     
     # Imprime la planta seleccionada actualizada
     print("Planta seleccionada actualizada:", planta_seleccionada)
