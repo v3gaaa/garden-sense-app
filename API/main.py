@@ -181,8 +181,6 @@ async def add_planta(planta: dict):
 # Endpoint para actualizar los detalles de la planta seleccionada
 @app.post("/plantas/seleccionada")
 async def set_planta_seleccionada(planta: dict):
-    global planta_seleccionada
-    
     # Imprime la planta seleccionada actual antes de la actualización
     print("Planta seleccionada anterior:", planta_seleccionada)
     
