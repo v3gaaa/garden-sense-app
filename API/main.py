@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
@@ -178,25 +178,33 @@ async def add_planta(planta: dict):
         print(f"Error al añadir nueva planta: {str(e)}")
         return JSONResponse(content={"message": "Error al añadir nueva planta"}, status_code=500)
 
+# Dependencia para almacenar los detalles de la planta seleccionada en el contexto de la solicitud
+async def get_planta_seleccionada():
+    return planta_seleccionada.copy()
+
 # Endpoint para actualizar los detalles de la planta seleccionada
 @app.post("/plantas/seleccionada")
-async def set_planta_seleccionada(planta: dict):
+async def set_planta_seleccionada(
+    planta: dict,
+    detalles_planta: dict = Depends(get_planta_seleccionada)
+):
     # Imprime la planta seleccionada actual antes de la actualización
-    print("Planta seleccionada anterior:", planta_seleccionada)
+    print("Planta seleccionada anterior:", detalles_planta)
     
-    # Actualiza cada campo de la planta seleccionada
-    planta_seleccionada.update(planta)
+    # Actualiza cada campo de la planta seleccionada en el contexto de la solicitud
+    detalles_planta.update(planta)
     
     # Imprime la planta seleccionada actualizada
-    print("Planta seleccionada actualizada:", planta_seleccionada)
+    print("Planta seleccionada actualizada:", detalles_planta)
     
     return {"message": "Detalles de planta actualizados correctamente"}
 
 
 # Endpoint para mandar los detalles de la planta seleccionada
 @app.get("/plantas/seleccionada/enviar")
-async def get_planta_seleccionada():
+async def enviar_planta():
     return planta_seleccionada
+
     
 
 # Endpoint para obtener nombres de todas las plantas

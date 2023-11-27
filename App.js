@@ -53,32 +53,34 @@ export default function App() {
 
   const getPlantDetails = async (plantName) => {
     try {
-      // Realizar una solicitud a la API para obtener detalles de la planta
       const response = await axios.get(`https://garden-sense-app-production.up.railway.app/plantas/${plantName}`);
-      setPlantDetails(response.data);  // Actualizar el estado con los detalles de la planta
+      setPlantDetails(prevDetails => ({ ...prevDetails, ...response.data }));
     } catch (error) {
       console.error('Error al obtener detalles de la planta:', error);
     }
   };
 
-  const handlePlantChange = (plantName) => {
-    // Actualiza la planta seleccionada en el estado local
-    setSelectedPlant(plantName);
-    getPlantDetails(selectedPlant);
-
-    // Envia los detalles de la nueva planta a la API
-    axios.post('https://garden-sense-app-production.up.railway.app/plantas/seleccionada', {
-      nombre: plantName,
-      minhum: plantDetails.minhum,  // Usa los detalles de la planta actual
-      maxhum: plantDetails.maxhum,
-    })
-    .then(response => {
-      console.log(response.data);
-    })
-    .catch(error => {
-      console.error('Error al actualizar detalles de planta:', error);
-    });
-  }
+  const handlePlantChange = async (plantName) => {
+    try {
+      setSelectedPlant(plantName);
+      await getPlantDetails(plantName);
+  
+      // Ahora, utiliza el estado actualizado de plantDetails
+      axios.post('https://garden-sense-app-production.up.railway.app/plantas/seleccionada', {
+        nombre: plantName,
+        minhum: plantDetails.minhum,
+        maxhum: plantDetails.maxhum,
+      })
+        .then(response => {
+          console.log(response.data);
+        })
+        .catch(error => {
+          console.error('Error al actualizar detalles de planta:', error);
+        });
+    } catch (error) {
+      console.error('Error al cambiar la planta seleccionada:', error);
+    }
+  };
  
   return (
     <View style={styles.container}>
