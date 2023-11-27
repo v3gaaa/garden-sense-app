@@ -74,7 +74,8 @@ if count == 0:
     ('Pimiento', 22, 30, 50, 70),
     ('Zanahoria', 15, 25, 50, 70),
     ('FueraMin', 1, 2, 1, 2),
-    ('FueraMax', 99, 100, 99, 100);
+    ('FueraMax', 99, 100, 99, 100),
+    ('EnRango', 1, 100, 1, 100);
     """
     cursor.execute(insert_inicial_plantas_query)
     conexion.commit()
