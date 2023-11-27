@@ -64,7 +64,6 @@ export default function App() {
   const handlePlantChange = (plantName) => {
     // Actualiza la planta seleccionada en el estado local
     setSelectedPlant(plantName);
-    getPlantDetails(selectedPlant);
 
     // Envia los detalles de la nueva planta a la API
     axios.post('https://garden-sense-app-production.up.railway.app/plantas/seleccionada', {
