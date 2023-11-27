@@ -180,6 +180,8 @@ async def add_planta(planta: dict):
 async def set_planta_seleccionada(planta: dict):
     global planta_seleccionada
     planta_seleccionada = planta
+    #Imprimir la planta seleccionada
+    print(planta_seleccionada)
     return {"message": "Detalles de planta actualizados correctamente"}
 
 # Endpoint para mandar los detalles de la planta seleccionada
