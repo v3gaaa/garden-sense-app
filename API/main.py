@@ -74,7 +74,8 @@ if count == 0:
     ('Pimiento', 22, 30, 50, 70),
     ('Zanahoria', 15, 25, 50, 70),
     ('FueraMin', 1, 2, 1, 2),
-    ('FueraMax', 99, 100, 99, 100);
+    ('FueraMax', 99, 100, 99, 100),
+    ('EnRango', 1, 100, 1, 100);
     """
     cursor.execute(insert_inicial_plantas_query)
     conexion.commit()
@@ -179,8 +180,18 @@ async def add_planta(planta: dict):
 @app.post("/plantas/seleccionada")
 async def set_planta_seleccionada(planta: dict):
     global planta_seleccionada
-    planta_seleccionada = planta
+    
+    # Imprime la planta seleccionada actual antes de la actualización
+    print("Planta seleccionada anterior:", planta_seleccionada)
+    
+    # Actualiza cada campo de la planta seleccionada
+    planta_seleccionada.update(planta)
+    
+    # Imprime la planta seleccionada actualizada
+    print("Planta seleccionada actualizada:", planta_seleccionada)
+    
     return {"message": "Detalles de planta actualizados correctamente"}
+
 
 # Endpoint para mandar los detalles de la planta seleccionada
 @app.get("/plantas/seleccionada/enviar")
