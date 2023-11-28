@@ -189,7 +189,7 @@ void loop() {
     if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
       Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
       
-      // Hacer sonar el buzzer cuando se detecta movimiento
+      // Hacer sonar el buzzer cuando se detecta movimiento (valor = 1)
       if (val == HIGH) {
         tone(buzzerPin, 1000); // Frecuencia de 1000 Hz (puedes ajustarla)
         delay(500); // Duración del sonido (puedes ajustarla)
