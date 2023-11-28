@@ -18,6 +18,12 @@
 
 #include <HTTPClient.h>
 
+#include <ESPAsyncWebServer.h>
+#include <Servo.h>
+
+
+AsyncWebServer server(80);
+
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "TP-Link_4F18"
 #define WIFI_PASSWORD "90729690"
@@ -37,7 +43,6 @@
 
 // Variables para el sensor PIR movimiento
 int pirState = LOW;
-int newSensorValue = 0;
 int val = 0;
 
 // Definición del PIN donde está conectado el sensor DHT de temperatura
@@ -56,18 +61,8 @@ unsigned long count = 0;
 
 
 // Definir PIN para el LED de estado de la humedad de la planta
-#define ledPin 2
-#define buzzerPin 4
+#define ledPin 21
 
-
-// Define la estructura para almacenar los detalles de la planta seleccionada
-struct PlantaSeleccionada {
-  String nombre;
-  int minhum;
-  int maxhum;
-};
-
-PlantaSeleccionada plantaSeleccionada;
 
 void setup() {
   // Inicializa la comunicación serial a 115200 baudios para la depuración
@@ -118,24 +113,13 @@ void setup() {
 
   // Inicializa el sensor DHT temperatura 
   dht.begin();
-
-  //Actuadores
-  pinMode(ledPin, OUTPUT);
-  pinMode(buzzerPin, OUTPUT);
-
 }
 
 
 
 void obtenerDetallesPlanta() {
   // Realizar solicitud a la API para obtener detalles de la planta seleccionada
-  Serial.println("Obteniendo detalles de la planta seleccionada...");
-
   HTTPClient http;
-  
-  // Agrega un encabezado de control de caché para evitar problemas de almacenamiento en caché
-  http.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  
   http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/enviar");  // Reemplaza con la URL correcta
   int httpCode = http.GET();
 
@@ -144,20 +128,15 @@ void obtenerDetallesPlanta() {
     DynamicJsonDocument doc(1024);  // Tamaño adecuado dependiendo de la respuesta
     deserializeJson(doc, http.getString());
 
-    // Limpiar la estructura antes de actualizar
-    plantaSeleccionada = PlantaSeleccionada();
-
     // Obtener los detalles de la planta seleccionada
     plantaSeleccionada.nombre = doc["nombre"].as<String>();
     plantaSeleccionada.minhum = doc["minhum"];
     plantaSeleccionada.maxhum = doc["maxhum"];
-  } else {
-    Serial.print("Error al obtener detalles de la planta. Código de respuesta: ");
-    Serial.println(httpCode);
   }
 
   http.end();
 }
+
 
 void loop() {
   obtenerDetallesPlanta();
@@ -173,7 +152,6 @@ void loop() {
   if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
     // Encender el LED
     digitalWrite(ledPin, HIGH);
-    Serial.println("Led encendido");  // Agrega este mensaje
   } else {
     // Apagar el LED
     digitalWrite(ledPin, LOW);
@@ -181,29 +159,22 @@ void loop() {
 
 
   if (newSensorValue != val) {
-  val = newSensorValue;
+    val = newSensorValue;
 
-  // Enviar datos a Firebase si la conexión está lista
-  if (Firebase.ready()) {
-    // Envía el valor del sensor PIR a Firebase
-    if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
-      Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
-      
-      // Hacer sonar el buzzer cuando se detecta movimiento
-      if (val == HIGH) {
-        tone(buzzerPin, 1000); // Frecuencia de 1000 Hz (puedes ajustarla)
-        delay(500); // Duración del sonido (puedes ajustarla)
-        noTone(buzzerPin); // Detener el sonido
+    // Enviar datos a Firebase si la conexión está lista
+    if (Firebase.ready()) {
+      // Envía el valor del sensor PIR a Firebase
+      if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
+        Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
+      } else {
+        Serial.println("Error al enviar el valor del sensor PIR a Firebase");
+        Serial.println(fbdo.errorReason().c_str());
       }
-    } else {
-      Serial.println("Error al enviar el valor del sensor PIR a Firebase");
-      Serial.println(fbdo.errorReason().c_str());
+
+      Serial.println();
+
+      count++;
     }
-
-    Serial.println();
-
-    count++;
-  }
   }
 
   // Enviar datos a Firebase si la conexión está lista y ha pasado el tiempo especificado

@@ -14,6 +14,7 @@ export default function App() {
   const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
   const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
   const [plantNames, setPlantNames] = useState([]);
+  
 
   const firebaseConfig = {
     // Configuración de Firebase con las credenciales de tu proyecto
@@ -79,6 +80,24 @@ export default function App() {
     });
   }
  
+
+  const regarPlanta = async () => {
+    try {
+      const response = await fetch('http://tu_direccion_ip_del_esp32/regarPlanta', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        console.log('Riego iniciado');
+      } else {
+        console.error('Error al iniciar el riego');
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+    }
+  };
+
+
   return (
     <View style={styles.container}>
       {/* Encabezado de la aplicación */}
@@ -150,6 +169,13 @@ export default function App() {
           </View>
           
         </View>
+
+        <View>
+        {/* Nuevo botón para regar la planta */}
+        <Button title="Regar Planta" onPress={regarPlanta} />
+        </View>
+
+        
       </View>
     </View>
   );
