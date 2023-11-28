@@ -61,7 +61,8 @@ unsigned long count = 0;
 
 
 // Definir PIN para el LED de estado de la humedad de la planta
-#define ledPin 21
+#define ledPin 2
+#define buzzerPin 4
 
 
 void setup() {
@@ -113,6 +114,10 @@ void setup() {
 
   // Inicializa el sensor DHT temperatura 
   dht.begin();
+
+  //Actuadores
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
 }
 
 
