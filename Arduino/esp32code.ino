@@ -18,7 +18,7 @@
 #include <HTTPClient.h>
 
 //Servomotor
-#include <Servo.h>
+#include <ESP32Servo.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "TP-Link_4F18"
@@ -166,6 +166,7 @@ void obtenerDetallesPlanta() {
 
 
 void regarPlanta() {
+  Serial.println("Regando planta")
   // Gira el servo a una posición específica (ajusta según tu servo)
   myServo.write(180);
 
@@ -176,16 +177,20 @@ void regarPlanta() {
   myServo.write(0);
 }
 
-void obtenerRiego(){
-  bool regar = Firebase.getBool(fbdo, "/riego");
-  if (regar) {
-    regarPlanta();
-  }
-};
+
 
 void loop() {
   obtenerDetallesPlanta();
-  obtenerRiego();
+  // Leer el estado del nodo de riego
+  bool regar = Firebase.getBool(fbdo, "/riego");
+
+  // Si el estado de riego es true, regar la planta
+  if (regar) {
+    regarPlanta();
+
+    // Actualizar el estado del nodo de riego a false después de regar
+    Firebase.setBool(fbdo, "/riego", false);
+  }
 
   // Lee los datos de temperatura del sensor DHT
   float temperature = dht.readTemperature();
