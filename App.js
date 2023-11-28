@@ -41,6 +41,17 @@ export default function App() {
       setTemperatura(data.temperatura);
     });
 
+
+    // Escucha cambios en el nodo de riego
+    onValue(sensoresRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data.riego) {
+        console.log('Regando la planta...');
+        // Reinicia el nodo de riego a false después de regar
+        update(sensoresRef, { riego: false });
+      }
+    });
+
     // Realizar la solicitud a la API al cargar la planta seleccionada
     getPlantDetails(selectedPlant);
 
@@ -81,20 +92,9 @@ export default function App() {
   }
  
 
-  const regarPlanta = async () => {
-    try {
-      const response = await fetch('http://192.168.1.100/regarPlanta', {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        console.log('Riego iniciado');
-      } else {
-        console.error('Error al iniciar el riego');
-      }
-    } catch (error) {
-      console.error('Error de red:', error);
-    }
+  const regarPlanta = () => {
+    // Actualiza el nodo de riego a true
+    update(sensoresRef, { riego: true });
   };
 
 

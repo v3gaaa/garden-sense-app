@@ -15,8 +15,10 @@
 
 // Bibliotecas para la comunicacion con la APi
 #include <ArduinoJson.h>
-
 #include <HTTPClient.h>
+
+//Servomotor
+#include <Servo.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "TP-Link_4F18"
@@ -58,6 +60,8 @@ unsigned long count = 0;
 // Definir PIN para el LED de estado de la humedad de la planta
 #define ledPin 2
 #define buzzerPin 4
+#define servoPin 15
+Servo myServo;
 
 
 // Define la estructura para almacenar los detalles de la planta seleccionada
@@ -122,6 +126,7 @@ void setup() {
   //Actuadores
   pinMode(ledPin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
+  myServo.attach(servoPin);
 
 }
 
@@ -159,8 +164,28 @@ void obtenerDetallesPlanta() {
   http.end();
 }
 
+
+void regarPlanta() {
+  // Gira el servo a una posición específica (ajusta según tu servo)
+  myServo.write(180);
+
+  // Espera durante 5 segundos
+  delay(5000);
+
+  // Vuelve el servo a la posición inicial (ajusta según tu servo)
+  myServo.write(0);
+}
+
+void obtenerRiego(){
+  bool regar = Firebase.getBool(fbdo, "/riego");
+  if (regar) {
+    regarPlanta();
+  }
+};
+
 void loop() {
   obtenerDetallesPlanta();
+  obtenerRiego();
 
   // Lee los datos de temperatura del sensor DHT
   float temperature = dht.readTemperature();
