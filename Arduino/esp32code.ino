@@ -63,6 +63,8 @@ unsigned long count = 0;
 // Definir PIN para el LED de estado de la humedad de la planta
 #define ledPin 2
 #define buzzerPin 4
+#define servoPin 15
+Servo miServo;
 
 
 void setup() {
@@ -118,6 +120,17 @@ void setup() {
   //Actuadores
   pinMode(ledPin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
+  miServo.attach(pinServo);
+
+  // Rutas para manejar solicitudes POST
+  server.on("/regarPlanta", HTTP_POST, [](AsyncWebServerRequest *request){
+    // Realiza la lógica para activar el servomotor aquí
+
+    activarServomotor();
+    request->send(200, "text/plain", "Riego iniciado");
+  });
+
+  server.begin();
 }
 
 
@@ -142,6 +155,12 @@ void obtenerDetallesPlanta() {
   http.end();
 }
 
+void activarServomotor() {
+  // Código para activar el servomotor durante 5 segundos
+  miServo.write(180);  // Gira el servo a 180 grados
+  delay(5000);         // Espera 5 segundos
+  miServo.write(0);    // Devuelve el servo a 0 grados
+}
 
 void loop() {
   obtenerDetallesPlanta();
