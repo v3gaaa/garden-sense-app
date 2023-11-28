@@ -83,7 +83,7 @@ export default function App() {
 
   const regarPlanta = async () => {
     try {
-      const response = await fetch('http://tu_direccion_ip_del_esp32/regarPlanta', {
+      const response = await fetch('http://192.168.1.100/regarPlanta', {
         method: 'POST',
       });
 
