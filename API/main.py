@@ -254,6 +254,7 @@ async def get_riego():
 async def set_riego(estado: bool):
     global riego
     riego = estado
+    print("Estado del riego actualizado:", riego)
     return {"message": "Estado del riego actualizado correctamente"}
 
 # Función que se ejecutará cada 5 minutos para alimentar la base de datos
