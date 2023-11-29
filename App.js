@@ -84,7 +84,7 @@ export default function App() {
 
   const regarPlanta = () => {
     // Actualiza el nodo de riego a true
-    update(sensoresRef, { riego: true });
+    update(sensoresRef, { riego: 1 });
   };
   
 
