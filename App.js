@@ -14,7 +14,6 @@ export default function App() {
   const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
   const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
   const [plantNames, setPlantNames] = useState([]);
-  const [riegoActivado, setRiegoActivado] = useState(false);
 
   
 
@@ -84,19 +83,8 @@ export default function App() {
  
 
   const regarPlanta = () => {
-    // Actualiza el estado de riego a true
-    setRiegoActivado(true);
-    
     // Actualiza el nodo de riego a true
     update(sensoresRef, { riego: true });
-  };
-  
-  const dejarDeRegar = () => {
-    // Actualiza el estado de riego a false
-    setRiegoActivado(false);
-    
-    // Actualiza el nodo de riego a false
-    update(sensoresRef, { riego: false });
   };
   
 
@@ -176,14 +164,6 @@ export default function App() {
         <View>
           {/* Botón para regar la planta */}
           <Button title="Regar Planta" onPress={regarPlanta} />
-
-          {/* Botón para dejar de regar */}
-          <Button title="Dejar de Regar" onPress={dejarDeRegar} />
-
-          {/* Muestra el estado actual de riego */}
-          <Text style={{ marginTop: 10 }}>
-            Estado de riego: {riegoActivado ? 'Regando' : 'No Regando'}
-          </Text>
         </View>
 
 
