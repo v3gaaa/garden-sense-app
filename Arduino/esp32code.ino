@@ -60,8 +60,8 @@ unsigned long count = 0;
 // Definir PIN para el LED de estado de la humedad de la planta
 #define ledPin 2
 #define buzzerPin 4
-#define servoPin 15
-Servo myServo;
+#define ledPin2 23
+int regar = 0;
 
 
 // Define la estructura para almacenar los detalles de la planta seleccionada
@@ -126,7 +126,7 @@ void setup() {
   //Actuadores
   pinMode(ledPin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
-  myServo.attach(servoPin);
+  pinMode(ledPin2, OUTPUT);
 
 }
 
@@ -159,37 +159,48 @@ void obtenerDetallesPlanta() {
   } else {
     Serial.print("Error al obtener detalles de la planta. Código de respuesta: ");
     Serial.println(httpCode);
+
+    
   }
 
   http.end();
+
 }
 
 
 void regarPlanta() {
-  Serial.println("Regando planta")
-  // Gira el servo a una posición específica (ajusta según tu servo)
-  myServo.write(180);
+  Serial.println("Regando planta");
 
-  // Espera durante 5 segundos
-  delay(5000);
+  // Enciende el segundo LED durante el riego
+  digitalWrite(ledPin2, HIGH);
 
-  // Vuelve el servo a la posición inicial (ajusta según tu servo)
-  myServo.write(0);
+  // Espera durante 1 segundo
+  delay(1000);
+
+  // Apaga el segundo LED después del riego
+  digitalWrite(ledPin2, LOW);
+
+
+  if (Firebase.ready()) {
+    Firebase.setInt(fbdo, "/sensores/riego", 0);
+    Serial.println("se seteo a false");
+  }
+  
 }
 
 
 
 void loop() {
   obtenerDetallesPlanta();
-  // Leer el estado del nodo de riego
-  bool regar = Firebase.getBool(fbdo, "/riego");
+
+  regar = Firebase.getInt(fbdo, "/sensores/riego");
+
+  Serial.println(regar);
 
   // Si el estado de riego es true, regar la planta
-  if (regar) {
+  if (regar == 1) {
     regarPlanta();
-
     // Actualizar el estado del nodo de riego a false después de regar
-    Firebase.setBool(fbdo, "/riego", false);
   }
 
   // Lee los datos de temperatura del sensor DHT
