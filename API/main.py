@@ -11,7 +11,7 @@ app = FastAPI()
 
 # Variables globales para almacenar los detalles de la planta seleccionada
 planta_seleccionada = {"nombre": "", "minhum": 0, "maxhum": 0}
-riego = False
+estado = {"riego": 0}
 
 app.add_middleware(
     CORSMiddleware,
@@ -251,19 +251,16 @@ async def get_riego():
 
 # Endpoint para actualizar el estado del riego
 @app.post("/riego/set")
-async def set_riego(estado: bool):
-    global riego
-    try:
-        # Agrega registros para verificar el valor recibido
-        print("Valor recibido:", estado)
-        
-        riego = estado
-        print("Estado del riego actualizado:", riego)
-        return {"message": "Estado del riego actualizado correctamente"}
-    except Exception as e:
-        # Registra la excepción para obtener más detalles
-        print("Error:", e)
-        return {"message": "Error al actualizar el estado del riego"}
+async def set_riego(status: dict):
+    global estado
+    
+    print("Estado anterior:", estado)
+    
+    estado.update(status)
+    
+    print("Estado actualizado:", estado)
+    
+    return {"message": "Estado actualizado correctamente"}
 
 
 # Función que se ejecutará cada 5 minutos para alimentar la base de datos
