@@ -173,23 +173,36 @@ bool obtenerRiego() {
   // Agrega un encabezado de control de caché para evitar problemas de almacenamiento en caché
   http.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 
-  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/riego");  // Reemplaza con la URL correcta
+  http.begin("https://garden-sense-app-production.up.railway.app/riego");  // Actualiza con la URL correcta
   int httpCode = http.GET();
 
   if (httpCode == HTTP_CODE_OK) {
     String payload = http.getString(); // Obtener el cuerpo de la respuesta
-    
+
+    // Parsear la respuesta JSON
+    DynamicJsonDocument doc(1024);  // Tamaño adecuado dependiendo de la respuesta
+    deserializeJson(doc, payload);
+
     // Verificar el contenido del cuerpo de la respuesta
-    if (payload == "true") {
-      // El riego está habilitado
-      return true;
-    } else if (payload == "false") {
-      // El riego está deshabilitado
-      return false;
+    if (doc.containsKey("riego")) {
+      int estadoRiego = doc["riego"];
+      Serial.println(estadoRiego);
+      
+      // Aquí puedes realizar la lógica según el estado de riego obtenido
+      if (estadoRiego == 1) {
+        // El riego está habilitado
+        return true;
+      } else if (estadoRiego == 0) {
+        // El riego está deshabilitado
+        return false;
+      } else {
+        // Manejar otros casos si es necesario
+        Serial.println("Respuesta inesperada del servidor: " + payload);
+        return false; // O devuelve un valor predeterminado según la lógica de tu aplicación
+      }
     } else {
-      // Manejar otros casos si es necesario
       Serial.println("Respuesta inesperada del servidor: " + payload);
-      return false; // O devuelve un valor predeterminado según la lógica de tu aplicación
+      return false; // O maneja el error de alguna manera según la lógica de tu aplicación
     }
   } else {
     Serial.println("Error al realizar la solicitud. Código de respuesta: " + String(httpCode));
@@ -198,6 +211,7 @@ bool obtenerRiego() {
 
   http.end();
 }
+
 
 
 void regarPlanta() {
@@ -212,30 +226,30 @@ void regarPlanta() {
   // Apaga el segundo LED después del riego
   digitalWrite(ledPin2, LOW);
 
-  // Realiza una solicitud HTTP POST para establecer el estado del riego a false
+  // Después de regar, cambia el valor de riego dentro del diccionario estado a 0
+  // Puedes enviar una solicitud POST para actualizar el estado del riego en tu servidor
   HTTPClient http;
-  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/riego");  // Reemplaza con la URL correcta
+  http.begin("https://garden-sense-app-production.up.railway.app/riego/set");
+
+  // Prepara el cuerpo de la solicitud
+  String requestBody = "{\"riego\": 0}";
+  
+  // Establece el tipo de contenido de la solicitud
   http.addHeader("Content-Type", "application/json");
 
-  // Crea un objeto JSON para enviar en el cuerpo de la solicitud
-  StaticJsonDocument<100> doc;
-  doc["estado"] = false;
-
-  // Convierte el objeto JSON en una cadena
-  String jsonBody;
-  serializeJson(doc, jsonBody);
-
-  // Realiza la solicitud POST con el cuerpo JSON
-  int httpCode = http.POST(jsonBody);
+  // Realiza la solicitud POST con el cuerpo de la solicitud
+  int httpCode = http.POST(requestBody);
 
   if (httpCode == HTTP_CODE_OK) {
-    Serial.println("Estado del riego actualizado correctamente");
+    Serial.println("Estado del riego actualizado correctamente después de regar la planta");
   } else {
-    Serial.println("Error al actualizar el estado del riego. Código de respuesta: " + String(httpCode));
+    Serial.print("Error al actualizar el estado del riego. Código de respuesta: ");
+    Serial.println(httpCode);
   }
 
   http.end();
 }
+
 
 
 
@@ -244,7 +258,7 @@ void loop() {
   regar = obtenerRiego();
 
   // Si el estado de riego es true, regar la planta
-  if (regar) {
+  if(regar){
     regarPlanta();
   }
 
