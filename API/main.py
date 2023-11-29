@@ -246,8 +246,8 @@ async def get_planta_details(nombre_planta: str):
 # Endpoint para recibir el estado del riego
 @app.get("/riego")
 async def get_riego():
-    global riego
-    return riego
+    global estado
+    return estado
 
 # Endpoint para actualizar el estado del riego
 @app.post("/riego/set")
