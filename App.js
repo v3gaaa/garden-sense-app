@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, Button } from 'react-native';
+import { StyleSheet, Text, View, Image, Button, Alert } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
@@ -83,15 +83,17 @@ export default function App() {
  
 
   const regarPlanta = () => {
-    axios.post('https://garden-sense-app-production.up.railway.app/plantas/riego/set', {
+    axios.post('https://garden-sense-app-production.up.railway.app/riego/set', {
       riego: 1,
     })
     .then(response => {
       console.log(response.data);
     })
     .catch(error => {
-      console.error('Error al actualizar detalles de planta:', error);
+      console.error('Error al actualizar estado del riego', error);
     });
+
+    Alert.alert('Planta regada');
 };
 
   
@@ -168,12 +170,21 @@ export default function App() {
           </View>
           
         </View>
-
-        <View>
-          {/* Botón para regar la planta */}
-          <Button title="Regar Planta" onPress={regarPlanta} />
-        </View>
-
+              
+          {/* Botón para regar la planta con estilo personalizado */}
+                <View style={styles.buttonContainer}>
+                  <View>
+                    <View style={styles.buttonTextContainer}>
+                      <Button
+                        onPress={regarPlanta}
+                        title="Regar Planta"
+                        color="#94A684" // Puedes cambiar el color según el estilo de tu aplicación
+                      />
+                    </View>
+                  </View>
+                </View>
+        
+        
 
         
       </View>
@@ -276,5 +287,15 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderRadius: 3,
     backgroundColor: '#94A684',
+  },
+  buttonContainer: {
+    borderRadius: 20, // Hace que el botón sea circular
+    borderWidth: 1,  // Añade un borde
+    borderColor: '#94A684',  // Color del borde
+    overflow: 'hidden', // Asegura que el contenido no sobresalga del contenedor
+  },
+  buttonTextContainer: {
+    paddingHorizontal: 20, // Ajusta el espacio alrededor del texto
+    paddingVertical: 10,
   },
 });
