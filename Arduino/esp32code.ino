@@ -61,7 +61,7 @@ unsigned long count = 0;
 #define ledPin 2
 #define buzzerPin 4
 #define ledPin2 23
-int regar = 0;
+bool regar = false;
 
 
 // Define la estructura para almacenar los detalles de la planta seleccionada
@@ -167,6 +167,38 @@ void obtenerDetallesPlanta() {
 
 }
 
+bool obtenerRiego() {
+  HTTPClient http;
+
+  // Agrega un encabezado de control de caché para evitar problemas de almacenamiento en caché
+  http.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/riego");  // Reemplaza con la URL correcta
+  int httpCode = http.GET();
+
+  if (httpCode == HTTP_CODE_OK) {
+    String payload = http.getString(); // Obtener el cuerpo de la respuesta
+    
+    // Verificar el contenido del cuerpo de la respuesta
+    if (payload == "true") {
+      // El riego está habilitado
+      return true;
+    } else if (payload == "false") {
+      // El riego está deshabilitado
+      return false;
+    } else {
+      // Manejar otros casos si es necesario
+      Serial.println("Respuesta inesperada del servidor: " + payload);
+      return false; // O devuelve un valor predeterminado según la lógica de tu aplicación
+    }
+  } else {
+    Serial.println("Error al realizar la solicitud. Código de respuesta: " + String(httpCode));
+    return false; // O maneja el error de alguna manera según la lógica de tu aplicación
+  }
+
+  http.end();
+}
+
 
 void regarPlanta() {
   Serial.println("Regando planta");
@@ -180,27 +212,40 @@ void regarPlanta() {
   // Apaga el segundo LED después del riego
   digitalWrite(ledPin2, LOW);
 
+  // Realiza una solicitud HTTP POST para establecer el estado del riego a false
+  HTTPClient http;
+  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/riego");  // Reemplaza con la URL correcta
+  http.addHeader("Content-Type", "application/json");
 
-  if (Firebase.ready()) {
-    Firebase.setInt(fbdo, "/sensores/riego", 0);
-    Serial.println("se seteo a false");
+  // Crea un objeto JSON para enviar en el cuerpo de la solicitud
+  StaticJsonDocument<100> doc;
+  doc["estado"] = false;
+
+  // Convierte el objeto JSON en una cadena
+  String jsonBody;
+  serializeJson(doc, jsonBody);
+
+  // Realiza la solicitud POST con el cuerpo JSON
+  int httpCode = http.POST(jsonBody);
+
+  if (httpCode == HTTP_CODE_OK) {
+    Serial.println("Estado del riego actualizado correctamente");
+  } else {
+    Serial.println("Error al actualizar el estado del riego. Código de respuesta: " + String(httpCode));
   }
-  
+
+  http.end();
 }
 
 
 
 void loop() {
   obtenerDetallesPlanta();
-
-  regar = Firebase.getInt(fbdo, "/sensores/riego");
-
-  Serial.println(regar);
+  regar = obtenerRiego();
 
   // Si el estado de riego es true, regar la planta
-  if (regar == 1) {
+  if (regar) {
     regarPlanta();
-    // Actualizar el estado del nodo de riego a false después de regar
   }
 
   // Lee los datos de temperatura del sensor DHT
