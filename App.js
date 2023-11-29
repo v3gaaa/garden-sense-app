@@ -83,11 +83,19 @@ export default function App() {
  
 
   const regarPlanta = () => {
-    //Setea el riego a true a traves de la API
+    // Setea el riego a true a través de la API
     axios.post('https://garden-sense-app-production.up.railway.app/riego/set', {
-      riego: true,
+        estado: true
     })
-  };
+    // console.log para verificar que se envió el dato
+    .then(response => {
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.error('Error al regar la planta:', error);
+    });
+};
+
   
 
 

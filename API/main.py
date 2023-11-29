@@ -253,9 +253,18 @@ async def get_riego():
 @app.post("/riego/set")
 async def set_riego(estado: bool):
     global riego
-    riego = estado
-    print("Estado del riego actualizado:", riego)
-    return {"message": "Estado del riego actualizado correctamente"}
+    try:
+        # Agrega registros para verificar el valor recibido
+        print("Valor recibido:", estado)
+        
+        riego = estado
+        print("Estado del riego actualizado:", riego)
+        return {"message": "Estado del riego actualizado correctamente"}
+    except Exception as e:
+        # Registra la excepción para obtener más detalles
+        print("Error:", e)
+        return {"message": "Error al actualizar el estado del riego"}
+
 
 # Función que se ejecutará cada 5 minutos para alimentar la base de datos
 def feed_database():
