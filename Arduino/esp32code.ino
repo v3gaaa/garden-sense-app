@@ -21,8 +21,8 @@
 #include <ESP32Servo.h>
 
 /* 1. Define the WiFi credentials */
-#define WIFI_SSID "TP-Link_4F18"
-#define WIFI_PASSWORD "90729690"
+#define WIFI_SSID "Totalplay-15AA"
+#define WIFI_PASSWORD "15AA0AC9DTUjDa69"
 
 /* 2. Define the API Key */
 #define API_KEY "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY"
@@ -35,7 +35,7 @@
 #define USER_PASSWORD "Tec_4_ever"
 
 // Define el PIN para el sensor PIR movimiento
-#define PIR_PIN 5
+#define PIR_PIN 22
 
 // Variables para el sensor PIR movimiento
 int pirState = LOW;
@@ -119,6 +119,7 @@ void setup() {
 
   // Configura el PIN del sensor PIR de movimiento como entrada
   pinMode(PIR_PIN, INPUT);
+  
 
   // Inicializa el sensor DHT temperatura 
   dht.begin();
