@@ -4,7 +4,10 @@ import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, update } from 'firebase/database';
 import axios from 'axios';
-
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas, faSun, faTriangleExclamation, faShield, faTemperatureHalf, faDroplet } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import * as Animatable from 'react-native-animatable';
 
 export default function App() {
   // Estados para almacenar los valores de sensores y la planta seleccionada
@@ -14,8 +17,9 @@ export default function App() {
   const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
   const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
   const [plantNames, setPlantNames] = useState([]);
+  const [rotationAngle, setRotationAngle] = useState(0);
 
-  
+  library.add(fas, faDroplet, faTriangleExclamation, faShield, faTemperatureHalf);
 
   const firebaseConfig = {
     // Configuración de Firebase con las credenciales de tu proyecto
@@ -32,6 +36,15 @@ export default function App() {
   const firebaseApp = initializeApp(firebaseConfig);
   const db = getDatabase(firebaseApp);
   const sensoresRef = ref(db, 'sensores');
+
+  useEffect(() => {
+    const rotationInterval = setInterval(() => {
+      setRotationAngle((prevAngle) => prevAngle + 10);
+    }, 100);
+
+    return () => clearInterval(rotationInterval); // Limpia el intervalo cuando el componente se desmonta
+  }, []); // Este efecto se ejecuta solo una vez al montar el componente
+
 
   useEffect(() => {
     // Escucha cambios en la base de datos de Firebase y actualiza los estados
@@ -92,8 +105,6 @@ export default function App() {
     .catch(error => {
       console.error('Error al actualizar estado del riego', error);
     });
-
-    Alert.alert('Planta regada');
 };
 
   
@@ -128,7 +139,6 @@ export default function App() {
           </View>
         </View>
 
-        {/* Contenedor de información de sensores */}
         <View style={styles.rectangleContainer}>
           {/* Línea de separación */}
           <View style={styles.line}>
@@ -137,6 +147,7 @@ export default function App() {
 
           {/* Muestra la humedad del sensor */}
           <View style={styles.rectangle}>
+            <FontAwesomeIcon icon={['fas', 'droplet']} size={30} color="#4e76bc" style={styles.icon} />
             <Text style={[
               styles.rectangleText,
               // Cambia el color y el mensaje basado en la humedad
@@ -152,24 +163,30 @@ export default function App() {
                 ? 'Falta regar'
                 : 'Regada'}
             </Text>
-          </View>
+        </View>
 
           {/* Muestra el estado de movimiento del sensor */}
           <View style={styles.rectangle}>
-            <Text style={[styles.rectangleText, movimiento === 1 ? { color: 'red' } : null]}>
-              {movimiento === 0 ? 'A salvo' : '¡Cuidado!'}
+            {movimiento === 1 ? (
+              <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} size={30} color="#DA0202" style={styles.icon} />
+            ) : (
+              <FontAwesomeIcon icon={['fas', 'shield']} size={30} color="#17549C" style={styles.icon} />
+            )}
+            <Text style={[styles.rectangleText, movimiento === 1 ? styles.warningText : null]}>
+              {movimiento === 0 ? 'Seguro' : '¡Cuidado!'}
             </Text>
           </View>
 
           {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
+            <FontAwesomeIcon icon={['fas', 'temperature-half']} size={30} color="#C8C1C1" style={styles.icon} />
             <Text style={[styles.rectangleText, 
                         temperatura > plantDetails.maxtemp ? { color: 'orange' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
               {temperatura} °C
             </Text>
           </View>
-          
         </View>
+
               
           {/* Botón para regar la planta con estilo personalizado */}
                 <View style={styles.buttonContainer}>
