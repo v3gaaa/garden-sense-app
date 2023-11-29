@@ -83,8 +83,10 @@ export default function App() {
  
 
   const regarPlanta = () => {
-    // Actualiza el nodo de riego a true
-    update(sensoresRef, { riego: 1 });
+    //Setea el riego a true a traves de la API
+    axios.post('https://garden-sense-app-production.up.railway.app/riego/set', {
+      riego: true,
+    })
   };
   
 
