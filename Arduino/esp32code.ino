@@ -1,46 +1,42 @@
 #include <Arduino.h>
-//Bibliotecas para la conexion con firebase
+
+// Librerias para la conexion a WiFi
 #include <WiFi.h>
-#include <FirebaseESP32.h>
-// Bibliotecas para el sensor PIR movimiento
+
+// Librerías para el sensor DHT de temperatura y humedad
 #include <Adafruit_Sensor.h>
-//Biblioteca sensor temperatura
 #include <DHT.h>
 
-// Provide the token generation process info.
+// Librerías de Firebase
+#include <FirebaseESP32.h>
 #include <addons/TokenHelper.h>
-
-// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-// Bibliotecas para la comunicacion con la APi
+// Libreías para realizar solicitudes HTTP y parsear JSON
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
-/* 1. Define the WiFi credentials */
+// Define las credenciales WiFi
 #define WIFI_SSID "TP-Link_4F18"
 #define WIFI_PASSWORD "90729690"
 
-/* 2. Define the API Key */
+// Define la clave API de Firebase
 #define API_KEY "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY"
 
-/* 3. Define the RTDB URL */
+// Define la URL de la base de datos en tiempo real de Firebase
 #define DATABASE_URL "https://gardensense-cfe37-default-rtdb.firebaseio.com"
 
-/* 4. Define the user Email and password that alreadey registerd or added in your project */
+// Define el email y la contraseña del usuario registrado en el proyecto
 #define USER_EMAIL "svsm03@hotmail.com"
 #define USER_PASSWORD "Tec_4_ever"
 
-// Define el PIN para el sensor PIR movimiento
+// Define el PIN para el sensor PIR de movimiento
 #define PIR_PIN 5
 
-// Variables para el sensor PIR movimiento
-int pirState = LOW;
-int val = 0;
+// Define el PIN donde está conectado el sensor DHT de temperatura
+#define DHT_PIN 18
+#define DHT_TYPE DHT11
 
-// Definición del PIN donde está conectado el sensor DHT de temperatura
-#define DHT_PIN 18  // Pin D18 donde se conecta el sensor DHT
-#define DHT_TYPE DHT11  // Cambia esto a DHT22 o DHT21 si estás utilizando un modelo de sensor DHT diferente
 DHT dht(DHT_PIN, DHT_TYPE);
 
 // Define objetos Firebase Data, Firebase Auth y Firebase Config
@@ -49,16 +45,14 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 unsigned long sendDataPrevMillis = 0;
-
 unsigned long count = 0;
 
-
-// Definir PIN para el LED de estado de la humedad de la planta
+// Define los PIN para los actuadores
 #define ledPin 2
 #define buzzerPin 4
 #define ledPin2 23
-bool regar = false;
 
+bool regar = false;
 
 // Define la estructura para almacenar los detalles de la planta seleccionada
 struct PlantaSeleccionada {
@@ -70,120 +64,99 @@ struct PlantaSeleccionada {
 PlantaSeleccionada plantaSeleccionada;
 
 void setup() {
-  // Inicializa la comunicación serial a 115200 baudios para la depuración
   Serial.begin(115200);
 
-  // Conecta al Wi-Fi utilizando las credenciales proporcionadas
+  // Conéctate a Wi-Fi usando las credenciales proporcionadas
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  Serial.print("Connecting to Wi-Fi");
+  Serial.print("Conectando a Wi-Fi");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print(".");
     delay(300);
   }
   Serial.println();
-  Serial.print("Connected with IP: ");
+  Serial.print("Conectado con IP: ");
   Serial.println(WiFi.localIP());
   Serial.println();
 
   // Imprime la versión del cliente Firebase
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-  // Asigna la clave API requerida
+  // Configura las credenciales y la URL de Firebase
   config.api_key = API_KEY;
-
-  // Asigna las credenciales de inicio de sesión del usuario
   auth.user.email = USER_EMAIL;
   auth.user.password = USER_PASSWORD;
-
-  // Asigna la URL de la base de datos en tiempo real requerida
   config.database_url = DATABASE_URL;
+  config.token_status_callback = tokenStatusCallback;
 
-  // Asigna la función de devolución de llamada para la tarea de generación de tokens de larga duración
-  config.token_status_callback = tokenStatusCallback; // Ver addons/TokenHelper.h
-
-  // Controla la reconexión de Wi-Fi, establecer en 'false' si será controlada por tu código o una biblioteca de terceros
+  // Permite la reconexión automática a Wi-Fi
   Firebase.reconnectNetwork(true);
 
-  // Configura el tamaño del búfer SSL (necesario desde la versión 4.4.x con BearSSL)
-  fbdo.setBSSLBufferSize(4096 /* Tamaño del búfer Rx en bytes de 512 a 16384 */, 1024 /* Tamaño del búfer Tx en bytes de 512 a 16384 */);
+  // Configura el tamaño del búfer SSL
+  fbdo.setBSSLBufferSize(4096, 1024);
 
   // Inicializa Firebase con la configuración y autenticación
   Firebase.begin(&config, &auth);
-
-  // Establece la cantidad de dígitos decimales para números de punto flotante en Firebase
   Firebase.setDoubleDigits(5);
 
-  // Configura el PIN del sensor PIR de movimiento como entrada
-  pinMode(PIR_PIN, INPUT);
 
-  // Inicializa el sensor DHT temperatura 
+  // Configura el PIN del sensor PIR de movimiento y el sensor DHT de temperatura y humedad
+  pinMode(PIR_PIN, INPUT);
   dht.begin();
 
-  //Actuadores
+
+  // Configura los PIN de los actuadores
   pinMode(ledPin, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
   pinMode(ledPin2, OUTPUT);
-
 }
 
-
-
 void obtenerDetallesPlanta() {
-  // Realizar solicitud a la API para obtener detalles de la planta seleccionada
+  // Realiza una solicitud a la API para obtener detalles de la planta seleccionada
   Serial.println("Obteniendo detalles de la planta seleccionada...");
 
   HTTPClient http;
-  
-  // Agrega un encabezado de control de caché para evitar problemas de almacenamiento en caché
   http.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-  
-  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/enviar");  // Reemplaza con la URL correcta
+  http.begin("https://garden-sense-app-production.up.railway.app/plantas/seleccionada/enviar");
+
   int httpCode = http.GET();
 
   if (httpCode == HTTP_CODE_OK) {
-    // Parsear la respuesta JSON
-    DynamicJsonDocument doc(1024);  // Tamaño adecuado dependiendo de la respuesta
+    // Parsea la respuesta JSON
+    DynamicJsonDocument doc(1024);
     deserializeJson(doc, http.getString());
 
-    // Limpiar la estructura antes de actualizar
+    // Limpia la estructura antes de actualizar
     plantaSeleccionada = PlantaSeleccionada();
 
-    // Obtener los detalles de la planta seleccionada
+    // Obtiene los detalles de la planta seleccionada
     plantaSeleccionada.nombre = doc["nombre"].as<String>();
     plantaSeleccionada.minhum = doc["minhum"];
     plantaSeleccionada.maxhum = doc["maxhum"];
   } else {
     Serial.print("Error al obtener detalles de la planta. Código de respuesta: ");
     Serial.println(httpCode);
-
-    
   }
 
   http.end();
-
 }
 
 bool obtenerRiego() {
+  // Realiza una solicitud a la API para obtener el estado del riego
   HTTPClient http;
-
-  // Agrega un encabezado de control de caché para evitar problemas de almacenamiento en caché
   http.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  http.begin("https://garden-sense-app-production.up.railway.app/riego");
 
-  http.begin("https://garden-sense-app-production.up.railway.app/riego");  // Actualiza con la URL correcta
   int httpCode = http.GET();
 
   if (httpCode == HTTP_CODE_OK) {
-    String payload = http.getString(); // Obtener el cuerpo de la respuesta
-
-    // Parsear la respuesta JSON
-    DynamicJsonDocument doc(1024);  // Tamaño adecuado dependiendo de la respuesta
+    String payload = http.getString();
+    DynamicJsonDocument doc(1024);
     deserializeJson(doc, payload);
 
-    // Verificar el contenido del cuerpo de la respuesta
     if (doc.containsKey("riego")) {
       int estadoRiego = doc["riego"];
-      
-      // Aquí puedes realizar la lógica según el estado de riego obtenido
+
+      // Lógica según el estado de riego obtenido
       if (estadoRiego == 1) {
         // El riego está habilitado
         return true;
@@ -193,23 +166,22 @@ bool obtenerRiego() {
       } else {
         // Manejar otros casos si es necesario
         Serial.println("Respuesta inesperada del servidor: " + payload);
-        return false; // O devuelve un valor predeterminado según la lógica de tu aplicación
+        return false;
       }
     } else {
       Serial.println("Respuesta inesperada del servidor: " + payload);
-      return false; // O maneja el error de alguna manera según la lógica de tu aplicación
+      return false;
     }
   } else {
     Serial.println("Error al realizar la solicitud. Código de respuesta: " + String(httpCode));
-    return false; // O maneja el error de alguna manera según la lógica de tu aplicación
+    return false;
   }
 
   http.end();
 }
 
-
-
 void regarPlanta() {
+  // Realiza acciones después de regar la planta
   Serial.println("Regando planta");
 
   // Enciende el segundo LED durante el riego
@@ -221,14 +193,13 @@ void regarPlanta() {
   // Apaga el segundo LED después del riego
   digitalWrite(ledPin2, LOW);
 
-  // Después de regar, cambia el valor de riego dentro del diccionario estado a 0
-  // Puedes enviar una solicitud POST para actualizar el estado del riego en tu servidor
+  // Después de regar, actualiza el estado del riego en el servidor
   HTTPClient http;
   http.begin("https://garden-sense-app-production.up.railway.app/riego/set");
 
   // Prepara el cuerpo de la solicitud
   String requestBody = "{\"riego\": 0}";
-  
+
   // Establece el tipo de contenido de la solicitud
   http.addHeader("Content-Type", "application/json");
 
@@ -245,49 +216,44 @@ void regarPlanta() {
   http.end();
 }
 
-
-
-
 void loop() {
+  // Obtener detalles de la planta seleccionada y el estado de riego
   obtenerDetallesPlanta();
   regar = obtenerRiego();
 
   // Si el estado de riego es true, regar la planta
-  if(regar){
+  if (regar) {
     regarPlanta();
   }
 
-  // Lee los datos de temperatura del sensor DHT
+  // Leer datos del sensor DHT de temperatura y humedad
   float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();  // Cambia a readHumidity() si también deseas la humedad
+  float humidity = dht.readHumidity();
 
-  // Lee el valor del sensor PIR movimiento
-  val = digitalRead(PIR_PIN);
+  // Leer el valor del sensor PIR movimiento
+  int val = digitalRead(PIR_PIN);
   Serial.println("Valor sensor PIR " + String(val));
 
-  // Comparar y controlar el LED
+  // Comparar y controlar el LED según los valores de humedad de la planta seleccionada
   if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
-    // Encender el LED
-    digitalWrite(ledPin, HIGH);
-    Serial.println("Led encendido");  // Agrega este mensaje
+    digitalWrite(ledPin, HIGH); // Enciende el LED
+    Serial.println("Led encendido");
   } else {
-    // Apagar el LED
-    digitalWrite(ledPin, LOW);
+    digitalWrite(ledPin, LOW); // Apaga el LED
   }
-
 
   // Hacer sonar el buzzer cuando se detecta movimiento
   if (val == 1) {
-      tone(buzzerPin, 1000); // Frecuencia de 1000 Hz (puedes ajustarla)
-      delay(500); // Duración del sonido (puedes ajustarla)
-      noTone(buzzerPin); // Detener el sonido
+    tone(buzzerPin, 1000); // Frecuencia de 1000 Hz
+    delay(500);            // Duración del sonido
+    noTone(buzzerPin);     // Detener el sonido
   }
 
   // Enviar datos a Firebase si la conexión está lista y ha pasado el tiempo especificado
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 3000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
 
-    // Envía el valor del sensor PIR a Firebase
+    // Enviar el valor del sensor PIR a Firebase
     if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
       Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
     } else {
@@ -295,7 +261,7 @@ void loop() {
       Serial.println(fbdo.errorReason().c_str());
     }
 
-    // Envía los datos de temperatura a Firebase si la lectura es válida
+    // Enviar datos de temperatura a Firebase si la lectura es válida
     if (!isnan(temperature)) {
       if (Firebase.setFloat(fbdo, "/sensores/temperatura", temperature)) {
         Serial.printf("Temperatura enviada a Firebase: %.2f °C\n", temperature);
@@ -307,7 +273,7 @@ void loop() {
       Serial.println("Error al leer la temperatura del sensor DHT");
     }
 
-    // Envía los datos de humedad a Firebase si la lectura es válida
+    // Enviar datos de humedad a Firebase si la lectura es válida
     if (!isnan(humidity)) {
       if (Firebase.setFloat(fbdo, "/sensores/humedad", humidity)) {
         Serial.printf("Humedad enviada a Firebase: %.2f \n", humidity);
@@ -324,3 +290,5 @@ void loop() {
     count++;
   }
 }
+
+
