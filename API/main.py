@@ -2,10 +2,10 @@ from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
-from datetime import datetime, timedelta
-import time
 from apscheduler.schedulers.background import BackgroundScheduler
 import requests
+from datetime import datetime, timedelta
+import time
 
 app = FastAPI()
 
@@ -25,7 +25,7 @@ app.add_middleware(
 conexion = mysql.connector.connect(
     host="gardensense.cllvtomg7jyh.us-east-2.rds.amazonaws.com",
     user="admin",
-    password="12345678", # Cambiar por la contraseña real
+    password="12345678",  # Cambiar por la contraseña real
     database="gardensense"
 )
 
@@ -83,6 +83,9 @@ if count == 0:
 
 # Función para insertar datos en la tabla 'data_sensores'
 def insert_sensor_data(humedad, movimiento, temperatura, user):
+    """
+    Inserta datos de sensores en la tabla 'data_sensores'.
+    """
     insert_data_query = """
     INSERT INTO data_sensores (humedad, movimiento,temperatura,user) VALUES (%s, %s, %s, %s);
     """
@@ -90,14 +93,20 @@ def insert_sensor_data(humedad, movimiento, temperatura, user):
     cursor.execute(insert_data_query, sensor_data)
     conexion.commit()
 
-#Endpoint principal
+# Endpoint principal
 @app.get("/")
 async def root():
+    """
+    Endpoint principal para la API de GardenSense.
+    """
     return {"message": "Bienvenido a la API de GardenSense"}
 
 # Endpoint para obtener datos de los sensores
 @app.get("/sensores")
 async def get_sensor_data():
+    """
+    Obtiene los datos más recientes de los sensores desde la base de datos.
+    """
     try:
         # Ejecutar una consulta SQL para obtener los últimos datos de la tabla 'data_sensores'
         query = "SELECT humedad, movimiento, temperatura, timestamp FROM data_sensores ORDER BY timestamp DESC LIMIT 1;"
@@ -125,6 +134,9 @@ async def get_sensor_data():
 
 # Función para insertar datos en la tabla 'data_plantas'
 def insert_planta_data(nombre, mintemp, maxtemp, minhum, maxhum):
+    """
+    Inserta datos de plantas en la tabla 'data_plantas'.
+    """
     insert_planta_query = """
     INSERT INTO data_plantas (nombre, mintemp, maxtemp, minhum, maxhum) VALUES (%s, %s, %s, %s, %s);
     """
@@ -135,6 +147,9 @@ def insert_planta_data(nombre, mintemp, maxtemp, minhum, maxhum):
 # Endpoint para obtener datos de todas las plantas
 @app.get("/plantas")
 async def get_plantas():
+    """
+    Obtiene datos de todas las plantas desde la base de datos.
+    """
     try:
         # Ejecutar una consulta SQL para obtener todos los datos de la tabla 'data_plantas'
         query = "SELECT id, nombre, mintemp, maxtemp, minhum, maxhum FROM data_plantas;"
@@ -162,6 +177,9 @@ async def get_plantas():
 # Endpoint para añadir una nueva planta
 @app.post("/plantas/nueva")
 async def add_planta(planta: dict):
+    """
+    Añade una nueva planta a la base de datos.
+    """
     try:
         # Validar que se proporcionen todos los campos necesarios
         required_fields = ["nombre", "mintemp", "maxtemp", "minhum", "maxhum"]
@@ -180,29 +198,36 @@ async def add_planta(planta: dict):
 # Endpoint para actualizar los detalles de la planta seleccionada
 @app.post("/plantas/seleccionada")
 async def set_planta_seleccionada(planta: dict):
+    """
+    Actualiza los detalles de la planta seleccionada.
+    """
     global planta_seleccionada
-    
+
     # Imprime la planta seleccionada actual antes de la actualización
     print("Planta seleccionada anterior:", planta_seleccionada)
-    
+
     # Actualiza cada campo de la planta seleccionada
     planta_seleccionada.update(planta)
-    
+
     # Imprime la planta seleccionada actualizada
     print("Planta seleccionada actualizada:", planta_seleccionada)
-    
-    return {"message": "Detalles de planta actualizados correctamente"}
 
+    return {"message": "Detalles de planta actualizados correctamente"}
 
 # Endpoint para mandar los detalles de la planta seleccionada
 @app.get("/plantas/seleccionada/enviar")
 async def get_planta_seleccionada():
+    """
+    Obtiene los detalles de la planta seleccionada.
+    """
     return planta_seleccionada
-    
 
 # Endpoint para obtener nombres de todas las plantas
 @app.get("/plantas/nombres")
 async def get_nombres_plantas():
+    """
+    Obtiene los nombres de todas las plantas desde la base de datos.
+    """
     try:
         # Ejecutar una consulta SQL para obtener los nombres de todas las plantas
         query = "SELECT nombre FROM data_plantas;"
@@ -219,6 +244,9 @@ async def get_nombres_plantas():
 # Endpoint para obtener detalles de una planta específica
 @app.get("/plantas/{nombre_planta}")
 async def get_planta_details(nombre_planta: str):
+    """
+    Obtiene los detalles de una planta específica desde la base de datos.
+    """
     try:
         # Ejecutar una consulta SQL para obtener los detalles de la planta específica
         query = "SELECT id, nombre, mintemp, maxtemp, minhum, maxhum FROM data_plantas WHERE nombre = %s;"
@@ -241,34 +269,46 @@ async def get_planta_details(nombre_planta: str):
     except Exception as e:
         print(f"Error al obtener detalles de la planta: {str(e)}")
         return JSONResponse(content={"message": "Error al obtener detalles de la planta"}, status_code=500)
-    
 
 # Endpoint para recibir el estado del riego
 @app.get("/riego")
 async def get_riego():
+    """
+    Obtiene el estado actual del riego.
+    """
     global estado
     return estado
 
 # Endpoint para actualizar el estado del riego
 @app.post("/riego/set")
 async def set_riego(status: dict):
+    """
+    Actualiza el estado del riego.
+    """
     global estado
-    
+
     print("Estado anterior:", estado)
-    
+
     estado.update(status)
-    
+
     print("Estado actualizado:", estado)
-    
+
     return {"message": "Estado actualizado correctamente"}
 
 
-# Función que se ejecutará cada 5 minutos para alimentar la base de datos
+# Función que se ejecutará cada 10 minutos para alimentar la base de datos
 def feed_database():
+    """
+    Actualiza la base de datos MySQL con datos de Firebase.
+
+    Realiza una solicitud GET a la base de datos de Firebase, obtiene los datos
+    y los inserta en la tabla 'data_sensores' de la base de datos MySQL.
+
+    """
     try:
         # URL de tu base de datos en tiempo real de Firebase
         firebase_url = "https://gardensense-cfe37-default-rtdb.firebaseio.com/sensores.json"
-    
+
         # Realizar la solicitud GET a la base de datos de Firebase
         response = requests.get(firebase_url)
 
@@ -299,6 +339,13 @@ scheduler.start()
 
 # Función que se ejecuta al cerrar la aplicación
 def close_database_connection():
+    """
+    Cierra la conexión a la base de datos MySQL.
+
+    Esta función se ejecuta al cerrar la aplicación para garantizar
+    que la conexión se cierre correctamente.
+
+    """
     cursor.close()
     conexion.close()
 
