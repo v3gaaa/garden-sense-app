@@ -2,34 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, Button } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue} from 'firebase/database';
+import { getDatabase, ref, onValue, off } from 'firebase/database';
 import axios from 'axios';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { fas, faTriangleExclamation, faShield, faTemperatureHalf, faDroplet } from '@fortawesome/free-solid-svg-icons';
+import {
+  fas,
+  faTriangleExclamation,
+  faShield,
+  faTemperatureHalf,
+  faDroplet,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+
+// Inicializa Font Awesome
+library.add(fas, faDroplet, faTriangleExclamation, faShield, faTemperatureHalf);
+
+// Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY",
+  authDomain: "gardensense-cfe37.firebaseapp.com",
+  databaseURL: "https://gardensense-cfe37-default-rtdb.firebaseio.com",
+  projectId: "gardensense-cfe37",
+  storageBucket: "gardensense-cfe37.appspot.com",
+  messagingSenderId: "949510113189",
+  appId: "1:949510113189:web:94c542b2d64df8fc2c4a4c",
+  measurementId: "G-0TR1T5V5ZP"
+};
 
 export default function App() {
   // Estados para almacenar los valores de sensores y la planta seleccionada
   const [humedad, setHumedad] = useState(0);
   const [movimiento, setMovimiento] = useState(0);
   const [temperatura, setTemperatura] = useState(0);
-  const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
-  const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
+  const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Valor predeterminado
+  const [plantDetails, setPlantDetails] = useState({});
   const [plantNames, setPlantNames] = useState([]);
 
-  library.add(fas, faDroplet, faTriangleExclamation, faShield, faTemperatureHalf);
-
-  const firebaseConfig = {
-    // Configuración de Firebase con las credenciales de tu proyecto
-    apiKey: "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY",
-    authDomain: "gardensense-cfe37.firebaseapp.com",
-    databaseURL: "https://gardensense-cfe37-default-rtdb.firebaseio.com",
-    projectId: "gardensense-cfe37",
-    storageBucket: "gardensense-cfe37.appspot.com",
-    messagingSenderId: "949510113189",
-    appId: "1:949510113189:web:94c542b2d64df8fc2c4a4c",
-    measurementId: "G-0TR1T5V5ZP"
-  };
   // Inicializa la aplicación de Firebase
   const firebaseApp = initializeApp(firebaseConfig);
   const db = getDatabase(firebaseApp);
@@ -37,42 +45,55 @@ export default function App() {
 
   useEffect(() => {
     // Escucha cambios en la base de datos de Firebase y actualiza los estados
-    onValue(sensoresRef, (snapshot) => {
+    const handleDatabaseChange = (snapshot) => {
       const data = snapshot.val();
       setHumedad(data.humedad);
       setMovimiento(data.movimiento);
       setTemperatura(data.temperatura);
-    });
+    };
 
-    // Realizar la solicitud a la API al cargar la planta seleccionada
+    onValue(sensoresRef, handleDatabaseChange);
+
+    // Realiza la solicitud a la API al cargar la planta seleccionada
     getPlantDetails(selectedPlant);
 
-    // Realizar solicitud a la API para obtener nombres de plantas
-    fetch("https://garden-sense-app-production.up.railway.app/plantas/nombres")
-      .then(response => response.json())
-      .then(data => setPlantNames(data))
-      .catch(error => console.error("Error al obtener nombres de plantas:", error));
+    // Realiza solicitud a la API para obtener nombres de plantas
+    fetchPlantNames();
 
+    return () => {
+      // Limpiar el listener cuando el componente se desmonte
+      off(sensoresRef, 'value', handleDatabaseChange);
+    };
   }, [selectedPlant]);  // Agrega selectedPlant como dependencia
+
+  const fetchPlantNames = async () => {
+    try {
+      const response = await fetch("https://garden-sense-app-production.up.railway.app/plantas/nombres");
+      const data = await response.json();
+      setPlantNames(data);
+    } catch (error) {
+      console.error("Error al obtener nombres de plantas:", error);
+    }
+  };
 
   const getPlantDetails = async (plantName) => {
     try {
-      // Realizar una solicitud a la API para obtener detalles de la planta
       const response = await axios.get(`https://garden-sense-app-production.up.railway.app/plantas/${plantName}`);
-      setPlantDetails(response.data);  // Actualizar el estado con los detalles de la planta
+      setPlantDetails(response.data);
     } catch (error) {
       console.error('Error al obtener detalles de la planta:', error);
     }
   };
 
   const handlePlantChange = (plantName) => {
-    // Actualiza la planta seleccionada en el estado local
     setSelectedPlant(plantName);
+    sendPlantDetailsToAPI(plantName);
+  };
 
-    // Envia los detalles de la nueva planta a la API
+  const sendPlantDetailsToAPI = (plantName) => {
     axios.post('https://garden-sense-app-production.up.railway.app/plantas/seleccionada', {
       nombre: plantName,
-      minhum: plantDetails.minhum,  // Usa los detalles de la planta actual
+      minhum: plantDetails.minhum,
       maxhum: plantDetails.maxhum,
     })
     .then(response => {
@@ -81,8 +102,7 @@ export default function App() {
     .catch(error => {
       console.error('Error al actualizar detalles de planta:', error);
     });
-  }
- 
+  };
 
   const regarPlanta = () => {
     axios.post('https://garden-sense-app-production.up.railway.app/riego/set', {
@@ -94,7 +114,7 @@ export default function App() {
     .catch(error => {
       console.error('Error al actualizar estado del riego', error);
     });
-};
+  };
 
   
   return (
@@ -113,13 +133,13 @@ export default function App() {
           <View style={styles.menuIconContainer}>
             {/* Selector de planta desplegable */}
             <ModalDropdown
-            options={plantNames}
-            initialScrollIndex={0}
-            onSelect={(index, value) => handlePlantChange(value)} // Actualiza la planta seleccionada
-            dropdownStyle={styles.dropdown}
+              options={plantNames}
+              initialScrollIndex={0}
+              onSelect={(index, value) => handlePlantChange(value)}
+              dropdownStyle={styles.dropdown}
             >
-            <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
-          </ModalDropdown>
+              <Image source={require('./images/toggle.png')} style={styles.dropdownOptionImage} />
+            </ModalDropdown>
           </View>
           <View style={styles.plantName}>
             <Text style={styles.Text}>{selectedPlant}</Text>
@@ -134,31 +154,25 @@ export default function App() {
 
           {/* Muestra la humedad del sensor */}
           <View style={styles.rectangle}>
-            <FontAwesomeIcon icon={['fas', 'droplet']} size={30} color="#4e76bc" style={styles.icon} />
-            <Text style={[
-              styles.rectangleText,
-              // Cambia el color y el mensaje basado en la humedad
-              humedad > plantDetails.maxhum
-                ? { color: 'navy' }
-                : humedad < plantDetails.minhum
-                ? { color: 'yellow' }
-                : null,
-            ]}>
-              {humedad > plantDetails.maxhum
-                ? 'Mucha agua'
-                : humedad < plantDetails.minhum
-                ? 'Falta regar'
-                : 'Regada'}
+            <FontAwesomeIcon
+              icon={['fas', 'droplet']}
+              size={30}
+              color={humedad > plantDetails.maxhum ? 'navy' : (humedad < plantDetails.minhum ? 'yellow' : '#4e76bc')}
+              style={styles.icon}
+            />
+            <Text style={[styles.rectangleText, humedad > plantDetails.maxhum ? { color: 'navy' } : (humedad < plantDetails.minhum ? { color: 'yellow' } : null)]}>
+              {humedad > plantDetails.maxhum ? 'Mucha agua' : (humedad < plantDetails.minhum ? 'Falta regar' : 'Regada')}
             </Text>
-        </View>
+          </View>
 
           {/* Muestra el estado de movimiento del sensor */}
           <View style={styles.rectangle}>
-            {movimiento === 1 ? (
-              <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} size={30} color="#DA0202" style={styles.icon} />
-            ) : (
-              <FontAwesomeIcon icon={['fas', 'shield']} size={30} color="#606c38" style={styles.icon} />
-            )}
+            <FontAwesomeIcon
+              icon={['fas', movimiento === 1 ? 'triangle-exclamation' : 'shield']}
+              size={30}
+              color={movimiento === 1 ? '#DA0202' : '#606c38'}
+              style={styles.icon}
+            />
             <Text style={[styles.rectangleText, movimiento === 1 ? styles.warningText : null]}>
               {movimiento === 0 ? 'Seguro' : '¡Cuidado!'}
             </Text>
@@ -166,31 +180,28 @@ export default function App() {
 
           {/* Muestra la temperatura del sensor */}
           <View style={styles.rectangle}>
-            <FontAwesomeIcon icon={['fas', 'temperature-half']} size={30} color="#C8C1C1" style={styles.icon} />
-            <Text style={[styles.rectangleText, 
-                        temperatura > plantDetails.maxtemp ? { color: 'orange' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
-              {temperatura} °C
+            <FontAwesomeIcon
+              icon={['fas', 'temperature-half']}
+              size={30}
+              color={temperatura > plantDetails.maxtemp ? 'orange' : (temperatura < plantDetails.mintemp ? 'skyblue' : '#C8C1C1')}
+              style={styles.icon}
+            />
+            <Text style={[styles.rectangleText, temperatura > plantDetails.maxtemp ? { color: 'orange' } : (temperatura < plantDetails.mintemp ? { color: 'skyblue' } : null)]}>
+              {`${temperatura} °C`}
             </Text>
           </View>
         </View>
 
-              
-          {/* Botón para regar la planta con estilo personalizado */}
-                <View style={styles.buttonContainer}>
-                  <View>
-                    <View style={styles.buttonTextContainer}>
-                      <Button
-                        onPress={regarPlanta}
-                        title="Regar Planta"
-                        color="#94A684" // Puedes cambiar el color según el estilo de tu aplicación
-                      />
-                    </View>
-                  </View>
-                </View>
-        
-        
-
-        
+        {/* Botón para regar la planta*/}
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonTextContainer}>
+            <Button
+              onPress={regarPlanta}
+              title="Regar Planta"
+              color="#94A684"
+            />
+          </View>
+        </View>
       </View>
     </View>
   );
