@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Image, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, Image, Button } from 'react-native';
 import ModalDropdown from 'react-native-modal-dropdown';
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue, update } from 'firebase/database';
+import { getDatabase, ref, onValue} from 'firebase/database';
 import axios from 'axios';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { fas, faSun, faTriangleExclamation, faShield, faTemperatureHalf, faDroplet } from '@fortawesome/free-solid-svg-icons';
+import { fas, faTriangleExclamation, faShield, faTemperatureHalf, faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import * as Animatable from 'react-native-animatable';
 
 export default function App() {
   // Estados para almacenar los valores de sensores y la planta seleccionada
@@ -17,7 +16,6 @@ export default function App() {
   const [selectedPlant, setSelectedPlant] = useState('Tomate'); // Elige un valor predeterminado
   const [plantDetails, setPlantDetails] = useState({});  // Nuevo estado para almacenar detalles de la planta
   const [plantNames, setPlantNames] = useState([]);
-  const [rotationAngle, setRotationAngle] = useState(0);
 
   library.add(fas, faDroplet, faTriangleExclamation, faShield, faTemperatureHalf);
 
@@ -36,15 +34,6 @@ export default function App() {
   const firebaseApp = initializeApp(firebaseConfig);
   const db = getDatabase(firebaseApp);
   const sensoresRef = ref(db, 'sensores');
-
-  useEffect(() => {
-    const rotationInterval = setInterval(() => {
-      setRotationAngle((prevAngle) => prevAngle + 10);
-    }, 100);
-
-    return () => clearInterval(rotationInterval); // Limpia el intervalo cuando el componente se desmonta
-  }, []); // Este efecto se ejecuta solo una vez al montar el componente
-
 
   useEffect(() => {
     // Escucha cambios en la base de datos de Firebase y actualiza los estados
@@ -108,13 +97,11 @@ export default function App() {
 };
 
   
-
-
   return (
     <View style={styles.container}>
       {/* Encabezado de la aplicación */}
       <View style={styles.header}>
-        <Image source={require('./images/options.png')} style={styles.options} />
+        <View style={styles.options} />
         <View style={styles.home}>
           <Text style={styles.headerText}>Home</Text>
         </View>
@@ -170,7 +157,7 @@ export default function App() {
             {movimiento === 1 ? (
               <FontAwesomeIcon icon={['fas', 'triangle-exclamation']} size={30} color="#DA0202" style={styles.icon} />
             ) : (
-              <FontAwesomeIcon icon={['fas', 'shield']} size={30} color="#17549C" style={styles.icon} />
+              <FontAwesomeIcon icon={['fas', 'shield']} size={30} color="#606c38" style={styles.icon} />
             )}
             <Text style={[styles.rectangleText, movimiento === 1 ? styles.warningText : null]}>
               {movimiento === 0 ? 'Seguro' : '¡Cuidado!'}

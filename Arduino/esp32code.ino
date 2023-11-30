@@ -17,9 +17,6 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
-//Servomotor
-#include <ESP32Servo.h>
-
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "TP-Link_4F18"
 #define WIFI_PASSWORD "90729690"
