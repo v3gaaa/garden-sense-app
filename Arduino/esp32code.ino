@@ -21,8 +21,8 @@
 #include <ESP32Servo.h>
 
 /* 1. Define the WiFi credentials */
-#define WIFI_SSID "Totalplay-15AA"
-#define WIFI_PASSWORD "15AA0AC9DTUjDa69"
+#define WIFI_SSID "TP-Link_4F18"
+#define WIFI_PASSWORD "90729690"
 
 /* 2. Define the API Key */
 #define API_KEY "AIzaSyAt5_BrZyNPK2hoLvBXMDjeyAY9pOmNqsY"
@@ -35,11 +35,10 @@
 #define USER_PASSWORD "Tec_4_ever"
 
 // Define el PIN para el sensor PIR movimiento
-#define PIR_PIN 22
+#define PIR_PIN 5
 
 // Variables para el sensor PIR movimiento
 int pirState = LOW;
-int newSensorValue = 0;
 int val = 0;
 
 // Definición del PIN donde está conectado el sensor DHT de temperatura
@@ -119,7 +118,6 @@ void setup() {
 
   // Configura el PIN del sensor PIR de movimiento como entrada
   pinMode(PIR_PIN, INPUT);
-  
 
   // Inicializa el sensor DHT temperatura 
   dht.begin();
@@ -187,7 +185,6 @@ bool obtenerRiego() {
     // Verificar el contenido del cuerpo de la respuesta
     if (doc.containsKey("riego")) {
       int estadoRiego = doc["riego"];
-      Serial.println(estadoRiego);
       
       // Aquí puedes realizar la lógica según el estado de riego obtenido
       if (estadoRiego == 1) {
@@ -268,7 +265,8 @@ void loop() {
   float humidity = dht.readHumidity();  // Cambia a readHumidity() si también deseas la humedad
 
   // Lee el valor del sensor PIR movimiento
-  newSensorValue = digitalRead(PIR_PIN);
+  val = digitalRead(PIR_PIN);
+  Serial.println("Valor sensor PIR " + String(val));
 
   // Comparar y controlar el LED
   if (humidity < plantaSeleccionada.minhum || humidity > plantaSeleccionada.maxhum) {
@@ -281,34 +279,15 @@ void loop() {
   }
 
 
-  if (newSensorValue != val) {
-  val = newSensorValue;
-
-  // Enviar datos a Firebase si la conexión está lista
-  if (Firebase.ready()) {
-    // Envía el valor del sensor PIR a Firebase
-    if (Firebase.setInt(fbdo, "/sensores/movimiento", val)) {
-      Serial.printf("Valor del sensor PIR enviado a Firebase: %d\n", val);
-      
-      // Hacer sonar el buzzer cuando se detecta movimiento
-      if (val == HIGH) {
-        tone(buzzerPin, 1000); // Frecuencia de 1000 Hz (puedes ajustarla)
-        delay(500); // Duración del sonido (puedes ajustarla)
-        noTone(buzzerPin); // Detener el sonido
-      }
-    } else {
-      Serial.println("Error al enviar el valor del sensor PIR a Firebase");
-      Serial.println(fbdo.errorReason().c_str());
-    }
-
-    Serial.println();
-
-    count++;
-  }
+  // Hacer sonar el buzzer cuando se detecta movimiento
+  if (val == 1) {
+      tone(buzzerPin, 1000); // Frecuencia de 1000 Hz (puedes ajustarla)
+      delay(500); // Duración del sonido (puedes ajustarla)
+      noTone(buzzerPin); // Detener el sonido
   }
 
   // Enviar datos a Firebase si la conexión está lista y ha pasado el tiempo especificado
-  if (Firebase.ready() && (millis() - sendDataPrevMillis > 10000 || sendDataPrevMillis == 0)) {
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 3000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
 
     // Envía el valor del sensor PIR a Firebase
