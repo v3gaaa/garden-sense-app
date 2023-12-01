@@ -123,7 +123,7 @@ export default function App() {
       <View style={styles.header}>
         <View style={styles.options} />
         <View style={styles.home}>
-          <Text style={styles.headerText}>Home</Text>
+          <Text style={styles.headerText}>Home </Text>
         </View>
       </View>
 
