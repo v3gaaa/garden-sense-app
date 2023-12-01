@@ -161,7 +161,7 @@ export default function App() {
               style={styles.icon}
             />
             <Text style={[styles.rectangleText, humedad > plantDetails.maxhum ? { color: 'navy' } : (humedad < plantDetails.minhum ? { color: 'yellow' } : null)]}>
-              {humedad > plantDetails.maxhum ? 'Mucha agua' : (humedad < plantDetails.minhum ? 'Falta regar' : 'Regada')}
+              {humedad > plantDetails.maxhum ? 'Mucha agua' : (humedad < plantDetails.minhum ? 'Falta regar' : 'Todo bien')}
             </Text>
           </View>
 
@@ -174,7 +174,7 @@ export default function App() {
               style={styles.icon}
             />
             <Text style={[styles.rectangleText, movimiento === 1 ? styles.warningText : null]}>
-              {movimiento === 0 ? 'Seguro' : '¡Cuidado!'}
+              {movimiento === 0 ? 'Segura' : '¡Cuidado!'}
             </Text>
           </View>
 
